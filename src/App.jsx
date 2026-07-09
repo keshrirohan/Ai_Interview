@@ -1,19 +1,13 @@
-import Hero from "./components/Hero";
-import Navbar from "./components/Navbar";
-import Testimonials from "./components/Testimonials";
-import Footer from "./components/Footer";
-import Plan from "./components/Plan";
-
+import Home from "../src/pages/Home";
+import { Routes, Route } from "react-router-dom";
+import Dashboard from "./pages/Dashboard";
 function App() {
   return (
-    <div className="min-h-screen bg-white dark:bg-zinc-950 transition-colors duration-300">
-      <Navbar />
-
-      <Hero />
-      <Plan />
-      <Testimonials />
-      <Footer />
-    </div>
+    <Routes>
+      <Route path="/" element={<Home />} />
+      <Route path="/dashboard" element={<Dashboard />} />
+      <Route path="*" element={<div>404 Not Found</div>} />
+    </Routes>
   );
 }
 
