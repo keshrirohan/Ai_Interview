@@ -1,105 +1,148 @@
 import { useRef } from "react";
 import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
+import { Star } from "lucide-react";
 
 gsap.registerPlugin(useGSAP);
 
 const Testimonials = () => {
-  //testimonials data
   const testimonials = [
     {
       name: "John Doe",
-      title: "CEO of Company",
+      title: "Software Engineer",
       image: "https://randomuser.me/api/portraits/men/1.jpg",
       testimonial:
-        "This product has changed the way we do business. Highly recommended!",
+        "EchoHire AI helped me prepare for technical interviews. The AI feedback was incredibly accurate and boosted my confidence.",
     },
     {
-      name: "Jane Smith",
-      title: "Marketing Manager",
-      image: "https://randomuser.me/api/portraits/women/1.jpg",
+      name: "Sarah Wilson",
+      title: "Frontend Developer",
+      image: "https://randomuser.me/api/portraits/women/2.jpg",
       testimonial:
-        "The team at EchoHire AI is amazing. Their support is top-notch!",
+        "The mock interviews felt realistic. I landed my dream job after just two weeks of practice.",
     },
     {
-      name: "Mike Johnson",
-      title: "Software Engineer",
-      image: "https://randomuser.me/api/portraits/men/2.jpg",
+      name: "Michael Chen",
+      title: "Product Manager",
+      image: "https://randomuser.me/api/portraits/men/3.jpg",
       testimonial:
-        "I can't imagine going back to the old way of doing things. This is a game-changer!",
+        "Resume analysis, AI feedback, and performance tracking are simply outstanding. Highly recommended!",
     },
   ];
-  // used to create a continuous scrolling effect by duplicating the testimonials array multiple times
+
   const allTestimonials = [
     ...testimonials,
     ...testimonials,
     ...testimonials,
     ...testimonials,
-    ...testimonials,
-    
   ];
 
   const containerRef = useRef(null);
 
   useGSAP(() => {
-    // Entrance animation
     gsap.from(".testimonial-card", {
       opacity: 0,
-      y: 40,
-      stagger: 0.15, //  used to make the card appear one after another with a slight delay
-      duration: 1,
-      ease: "power2.out",
+      y: 50,
+      duration: 0.8,
+      stagger: 0.15,
+      ease: "power3.out",
     });
 
     const container = containerRef.current;
-
     if (!container) return;
 
     const distance = container.scrollWidth / 2;
 
     gsap.to(container, {
       x: -distance,
-      duration: 20,
+      duration: 30,
       ease: "none",
       repeat: -1,
+      force3D: true, // Use force3D for better performance
     });
   }, []);
 
   return (
-    <section className="overflow-hidden bg-zinc-100 py-16 dark:bg-zinc-800">
-      <h2 className="mb-12 text-center text-3xl font-bold text-zinc-900 dark:text-white">
-        What Our Users Say
-        <span className="text-blue-500"> Testimonials</span>
-      </h2>
+    <section className="overflow-hidden bg-zinc-50 py-20 dark:bg-zinc-950">
+      <div className="mx-auto max-w-7xl px-6">
+        {/* Heading */}
+        <div className="mb-14 text-center">
+          <h2 className="text-4xl font-bold text-zinc-900 dark:text-white">
+            Loved by
+            <span className="text-blue-600"> Developers</span>
+          </h2>
 
-      <div className="overflow-hidden">
-        <div ref={containerRef} className="flex w-max gap-8 ">
-          {allTestimonials.map((testimonial, index) => (
-            <div
-              key={index}
-              className="testimonial-card w-[350px] shrink-0 rounded-xl bg-white p-6 shadow-lg dark:bg-zinc-900"
-            >
-              <div className="mb-4 flex items-center gap-4">
-                <img
-                  src={testimonial.image}
-                  alt={testimonial.name}
-                  className="h-16 w-16 rounded-full object-cover"
-                />
+          <p className="mt-4 text-zinc-600 dark:text-zinc-400">
+            Thousands of candidates use EchoHire AI to ace interviews.
+          </p>
+        </div>
 
-                <div>
-                  <h3 className="text-lg font-bold text-zinc-900 dark:text-white">
-                    {testimonial.name}
-                  </h3>
+        <div className="overflow-hidden">
+          <div
+            ref={containerRef}
+            className="flex w-max gap-6 will-change-transform"
+          >
+            {allTestimonials.map((item, index) => (
+              <div
+                key={index}
+                className="testimonial-card w-[300px] sm:w-[340px] shrink-0 rounded-xl border border-zinc-200 bg-white p-6 shadow-md dark:border-zinc-800 dark:bg-zinc-900"
+              >
+                {/* Rating */}
+                <div className="mb-4 flex gap-1">
+                  {[...Array(5)].map((_, i) => (
+                    <Star
+                      key={i}
+                      size={16}
+                      className="fill-yellow-400 text-yellow-400"
+                    />
+                  ))}
+                </div>
 
-                  <p className="text-blue-500">{testimonial.title}</p>
+                {/* Review */}
+                <p className="min-h-[110px] text-sm leading-6 text-zinc-600 dark:text-zinc-300">
+                  "{item.testimonial}"
+                </p>
+
+                {/* User */}
+                <div className="mt-6 flex items-center gap-3 border-t border-zinc-200 pt-4 dark:border-zinc-700">
+                  <img
+                    src={item.image}
+                    alt={item.name}
+                    className="h-12 w-12 rounded-full object-cover"
+                  />
+
+                  <div>
+                    <h3 className="font-semibold text-zinc-900 dark:text-white">
+                      {item.name}
+                    </h3>
+                    <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                      {item.title}
+                    </p>
+                  </div>
                 </div>
               </div>
+            ))}
+          </div>
+        </div>
 
-              <p className="text-zinc-600 dark:text-zinc-400">
-                "{testimonial.testimonial}"
-              </p>
-            </div>
-          ))}
+        {/* Bottom Stats */}
+        <div className="mt-16 flex flex-wrap items-center justify-center gap-10 text-center">
+          <div>
+            <h3 className="text-3xl font-bold text-blue-600">10K+</h3>
+            <p className="text-zinc-600 dark:text-zinc-400">Happy Candidates</p>
+          </div>
+
+          <div>
+            <h3 className="text-3xl font-bold text-blue-600">4.9/5</h3>
+            <p className="text-zinc-600 dark:text-zinc-400">Average Rating</p>
+          </div>
+
+          <div>
+            <h3 className="text-3xl font-bold text-blue-600">95%</h3>
+            <p className="text-zinc-600 dark:text-zinc-400">
+              Interview Success
+            </p>
+          </div>
         </div>
       </div>
     </section>

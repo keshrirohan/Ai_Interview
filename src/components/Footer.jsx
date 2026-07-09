@@ -1,21 +1,61 @@
+import { FaGithub, FaLinkedin, FaEnvelope } from "react-icons/fa";
 const Footer = () => {
   return (
-    <footer className="bg-zinc-100 dark:bg-zinc-900 py-6">
-      <div className="container mx-auto text-center text-zinc-700 dark:text-zinc-300">
-        <p>
-          &copy; {new Date().getFullYear()} EchoHire AI. All rights reserved.
-        </p>
-        <p>
-          made by{" "}
+    <footer className="border-t border-zinc-200 bg-white py-8 dark:border-zinc-800 dark:bg-zinc-950">
+      <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-6 px-6 text-center md:flex-row">
+        {/* Left */}
+        <div>
+          <h2 className="text-lg font-semibold text-zinc-900 dark:text-white">
+            EchoHire AI
+          </h2>
+
+          <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
+            Practice smarter. Get hired faster.
+          </p>
+        </div>
+
+        {/* Center */}
+        <div className="text-sm text-zinc-600 dark:text-zinc-400">
+          © {new Date().getFullYear()} EchoHire AI. All rights reserved.
+          <br />
+          Made with ❤️ by{" "}
           <a
             href="https://github.com/keshrirohan"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-blue-500 hover:underline"
+            className="font-medium text-blue-600 hover:underline"
           >
             Rohan Keshri
           </a>
-        </p>
+        </div>
+
+        {/* Right */}
+        <div className="flex items-center gap-4">
+          <a
+            href="https://github.com/keshrirohan"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-zinc-600 transition hover:text-blue-600 dark:text-zinc-400"
+          >
+            <FaGithub size={20} />
+          </a>
+
+          <a
+            href="https://linkedin.com/in/your-linkedin"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-zinc-600 transition hover:text-blue-600 dark:text-zinc-400"
+          >
+            <FaLinkedin size={20} />
+          </a>
+
+          <a
+            href="mailto:your@email.com"
+            className="text-zinc-600 transition hover:text-blue-600 dark:text-zinc-400"
+          >
+            <FaEnvelope size={20} />
+          </a>
+        </div>
       </div>
     </footer>
   );
