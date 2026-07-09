@@ -1,15 +1,16 @@
+import Hero from "./components/Hero";
 import Navbar from "./components/Navbar";
+import Testimonials from "./components/Testimonials";
+import Footer from "./components/Footer";
 
 function App() {
   return (
     <div className="min-h-screen bg-white dark:bg-zinc-950 transition-colors duration-300">
       <Navbar />
 
-      <section className="h-screen flex items-center justify-center">
-        <h1 className="text-6xl font-bold text-zinc-900 dark:text-white">
-          EchoHire AI
-        </h1>
-      </section>
+      <Hero />
+      <Testimonials />
+      <Footer />
     </div>
   );
 }
