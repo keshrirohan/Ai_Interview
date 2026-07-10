@@ -1,6 +1,6 @@
 import JDs from "../components/JDs";
 
-const Dashboard = () => {
+const NewInterview = () => {
   return (
     <div className="min-h-screen bg-zinc-50 pt-24 pb-10 transition-colors duration-300 dark:bg-zinc-950">
       <div className="mx-auto max-w-5xl px-6">
@@ -41,6 +41,12 @@ const Dashboard = () => {
             />
           </div>
 
+          <select required defaultValue={"Medium"} className="mb-6 block w-full rounded-lg border border-zinc-300 bg-zinc-50 p-3 text-sm text-zinc-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
+            <option value="Easy">Easy </option>
+            <option value="Medium">Medium</option>
+            <option value="Hard">Hard</option>
+          </select>
+
           {/* Buttons */}
           <div className="flex flex-col gap-4 sm:flex-row">
             <button className="rounded-xl bg-blue-600 px-6 py-3 font-medium text-white transition hover:bg-blue-700">
@@ -62,4 +68,4 @@ const Dashboard = () => {
   );
 };
 
-export default Dashboard;
+export default NewInterview;

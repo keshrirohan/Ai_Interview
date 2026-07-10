@@ -32,9 +32,12 @@ const Hero = () => {
 
           {/* Buttons */}
           <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
-            <button className="rounded-xl bg-blue-600 px-8 py-4 font-semibold text-white shadow-lg shadow-blue-500/30 transition-all duration-300 hover:scale-105 hover:bg-blue-700">
+            <a
+              href="/newinterview"
+              className="rounded-xl bg-blue-600 px-8 py-4 font-semibold text-white shadow-lg shadow-blue-500/30 transition-all duration-300 hover:scale-105 hover:bg-blue-700"
+            >
               Start Free Interview
-            </button>
+            </a>
 
             <button className="rounded-xl border border-zinc-300 bg-white px-8 py-4 font-semibold text-zinc-800 transition-all duration-300 hover:bg-zinc-100 dark:border-zinc-700 dark:bg-zinc-900 dark:text-white dark:hover:bg-zinc-800">
               Watch Demo
