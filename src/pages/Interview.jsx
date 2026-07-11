@@ -1,4 +1,3 @@
-
 import CameraPreview from "../components/CameraPreview";
 
 const Interview = () => {
@@ -47,10 +46,8 @@ const Interview = () => {
           <div className="rounded-3xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-lg p-6">
             <div className="aspect-video rounded-2xl overflow-hidden bg-zinc-200 dark:bg-zinc-800 flex items-center justify-center">
               {/* Replace with webcam component */}
-              <span className="text-zinc-500 dark:text-zinc-400">
-               
-                <CameraPreview />
-              </span>
+
+              <CameraPreview />
             </div>
 
             {/* Status */}
