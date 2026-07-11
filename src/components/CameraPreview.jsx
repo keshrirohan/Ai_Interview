@@ -2,208 +2,129 @@ import { useEffect, useRef, useState } from "react";
 import { Camera, CameraOff, Mic, MicOff } from "lucide-react";
 
 function CameraPreview() {
-  // Reference to the <video> element
   const videoRef = useRef(null);
-  const micRef = useRef(null);
 
-  // Stores whether the camera is currently on or off
-  const [cameraOn, setCameraOn] = useState(null);
-  // Stores whether the microphone is currently on or off
-  const [micOn, setMicOn] = useState(null);
+  const cameraStream = useRef(null);
+  const micStream = useRef(null);
 
-  // ==========================
-  // Start Camera
-  // ==========================
-  const handleCameraAccess = async () => {
+  const [cameraOn, setCameraOn] = useState(false);
+  const [micOn, setMicOn] = useState(false);
+
+  // Camera
+  const startCamera = async () => {
     try {
-      // Ask the user for camera permission
       const stream = await navigator.mediaDevices.getUserMedia({
         video: true,
       });
-      console.log("Camera access granted:", stream);
 
-      // Attach the camera stream to the video element
+      cameraStream.current = stream;
+
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
-        setCameraOn(true);
       }
-    } catch (error) {
-      // Runs if the user denies permission or no camera is found
-      console.error("Error accessing camera:", error);
+
+      setCameraOn(true);
+    } catch (err) {
+      console.error(err);
       setCameraOn(false);
     }
   };
 
-  // ==========================
-  // Stop Camera
-  // ==========================
-  const handleStopCamera = () => {
-    // Check if a stream is attached
-    if (videoRef.current?.srcObject) {
-      const stream = videoRef.current.srcObject;
+  const stopCamera = () => {
+    cameraStream.current?.getTracks().forEach((track) => track.stop());
+    cameraStream.current = null;
 
-      // Stop every track (camera, microphone, etc.)
-      stream.getTracks().forEach((track) => track.stop());
-
-      // Remove the stream from the video
+    if (videoRef.current) {
       videoRef.current.srcObject = null;
     }
 
-    // Update UI state
     setCameraOn(false);
   };
 
-  // ==========================
-  // Toggle Camera
-  // ==========================
-  const handleToggleCamera = () => {
-    if (cameraOn) {
-      // Camera is already on → Turn it off
-      handleStopCamera();
-    } else {
-      // Camera is off → Turn it on
-      handleCameraAccess();
-    }
-  };
-
-  // ==========================
-  // Runs once when component mounts
-  // ==========================
-  useEffect(() => {
-    // Automatically start the camera
-    () => {
-      handleCameraAccess();
-    };
-    // Cleanup when component unmounts
-    return () => {
-      handleStopCamera();
-    };
-  }, []);
-
-  const handleMicAccess = async () => {
+  // Mic
+  const startMic = async () => {
     try {
-      // Ask the user for microphone permission
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: true,
       });
-      console.log("Microphone access granted:", stream);
-      // Update UI state
-      if (micRef.current) {
-        micRef.current.srcObject = stream;
-        setMicOn(true);
-      }
 
-      console.log("Microphone is now active.");
-    } catch (error) {
-      console.error("Error accessing microphone:", error);
+      micStream.current = stream;
+      setMicOn(true);
+    } catch (err) {
+      console.error(err);
+      setMicOn(false);
     }
   };
 
-  const handleMicStop = () => {
-    // Check if a stream is attached
-    if (micRef.current?.srcObject) {
-      const stream = micRef.current.srcObject;
-      stream.getTracks().forEach((track) => track.stop());
-      // Remove the stream from the video
-      micRef.current.srcObject = null;
-    }
-    // Update UI state
+  const stopMic = () => {
+    micStream.current?.getTracks().forEach((track) => track.stop());
+    micStream.current = null;
     setMicOn(false);
-    console.log("Microphone has been stopped.");
-  };
-
-  const handleToggleMic = () => {
-    // Placeholder for microphone toggle functionality
-    if (!micOn) {
-      handleMicAccess();
-    } else {
-      handleMicStop();
-    }
   };
 
   useEffect(() => {
-    // Automatically start the microphone
-    () => {
-      handleMicAccess();
-    };
-    // Cleanup when component unmounts
+    startCamera();
+    startMic();
+
     return () => {
-      handleMicStop();
+      stopCamera();
+      stopMic();
     };
   }, []);
 
   return (
-    <section className="relative w-full h-full rounded-3xl bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 overflow-hidden shadow-lg">
-      {/* Header */}
-      <div className="flex items-center justify-between  border-b border-zinc-200 dark:border-zinc-700">
-        {/* Show "Live" badge only when camera is active */}
-      </div>
-
-      {/* Camera Preview */}
-      <div className=" aspect-video bg-black">
+    <section className="relative flex h-full w-full overflow-hidden rounded-2xl border border-zinc-200 bg-zinc-100 dark:border-zinc-800 dark:bg-zinc-900">
+      {/* Camera */}
+      <div className="relative flex-1">
         <video
           ref={videoRef}
           autoPlay
           playsInline
           muted
-          // Mirror the preview like Zoom/Google Meet
-          className={`w-full h-full object-cover scale-x-[-1] ${
+          className={`h-full w-full object-cover scale-x-[-1] ${
             cameraOn ? "block" : "hidden"
           }`}
         />
 
-        {/* Display when camera is off */}
         {!cameraOn && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 text-zinc-400">
-            <CameraOff size={48} />
-            <p>Camera is Off</p>
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 text-zinc-500 dark:text-zinc-400">
+            <CameraOff size={56} />
+            <p className="text-lg font-medium">Camera is Off</p>
           </div>
         )}
-      </div>
 
-      {/* Footer Button */}
-      <div className="absolute bottom-0  right-0 flex gap-2 items-center justify-center p-2 ">
-        <button
-          onClick={handleToggleCamera}
-          className={`flex items-center gap-2 rounded-xl px-6 py-3 font-semibold text-white transition-all duration-300 ${
-            cameraOn
-              ? "bg-red-400 hover:bg-red-700"
-              : "bg-emerald-400 hover:bg-emerald-700"
-          }`}
-        >
-          {/* Change button icon and text based on camera state */}
-          {cameraOn ? (
-            <>
-              <CameraOff size={20} />
-            </>
-          ) : (
-            <>
-              <Camera size={20} />
-            </>
-          )}
-        </button>
-        <button
-          onClick={handleToggleMic}
-          ref={micRef}
-          className={`flex items-center gap-2 rounded-xl px-6 py-3 font-semibold text-white transition-all duration-300 ${
-            micOn
-              ? "bg-red-400 hover:bg-red-700"
-              : "bg-emerald-400 hover:bg-emerald-700"
-          }`}
-        >
-          {/* Change button icon and text based on camera state */}
-          {micOn ? (
-            <>
-              <MicOff size={20} />
-             
-            </>
-          ) : (
-            <>
-              <Mic size={20} />
-              
-            </>
-          )}
-        </button>
+        {/* Live Badge */}
+        {cameraOn && (
+          <div className="absolute left-4 top-4 flex items-center gap-2 rounded-full bg-black/60 px-3 py-1 text-sm text-white backdrop-blur">
+            <span className="h-2 w-2 animate-pulse rounded-full bg-red-500" />
+            Live
+          </div>
+        )}
+
+        {/* Controls */}
+        <div className="absolute bottom-5 left-1/2 flex -translate-x-1/2 gap-4 rounded-full bg-white/80 p-3 shadow-xl backdrop-blur dark:bg-zinc-900/80">
+          <button
+            onClick={() => (cameraOn ? stopCamera() : startCamera())}
+            className={`rounded-full p-4 transition ${
+              cameraOn
+                ? "bg-red-500 text-white hover:bg-red-600"
+                : "bg-emerald-500 text-white hover:bg-emerald-600"
+            }`}
+          >
+            {cameraOn ? <CameraOff size={22} /> : <Camera size={22} />}
+          </button>
+
+          <button
+            onClick={() => (micOn ? stopMic() : startMic())}
+            className={`rounded-full p-4 transition ${
+              micOn
+                ? "bg-red-500 text-white hover:bg-red-600"
+                : "bg-emerald-500 text-white hover:bg-emerald-600"
+            }`}
+          >
+            {micOn ? <MicOff size={22} /> : <Mic size={22} />}
+          </button>
+        </div>
       </div>
     </section>
   );

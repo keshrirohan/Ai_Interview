@@ -7,7 +7,8 @@ function App() {
     <Routes>
       <Route path="/" element={<Home />} />
       <Route path="/NewInterview" element={<NewInterview />} />
-      <Route path="/interview" element={<Interview />} />
+      <Route path="/interview" element={<NewInterview />} />
+      <Route path="/interview/:id" element={<Interview />} />
       <Route path="*" element={<div>404 Not Found</div>} />
     </Routes>
   );
