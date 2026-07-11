@@ -1,9 +1,8 @@
-import { useState } from "react";
 import AiPreview from "../components/AiPreview";
 import CameraPreview from "../components/CameraPreview";
 
 const Interview = () => {
-  const [difficulty, setDifficulty] = useState("Medium");
+  const difficulty = "hard"; // Replace with actual difficulty value
 
   return (
     <div className="min-h-screen bg-zinc-50 transition-colors duration-300 dark:bg-zinc-950">
@@ -50,7 +49,7 @@ const Interview = () => {
                       : "bg-red-100 text-red-700 dark:bg-red-500/10 dark:text-red-400"
                 }`}
               >
-                {difficulty}
+                hard
               </span>
             </div>
           </div>
