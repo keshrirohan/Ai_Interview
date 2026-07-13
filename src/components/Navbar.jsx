@@ -7,6 +7,7 @@ import ThemeToggle from "./ThemeToggle";
 import Signup from "./auth/Signup";
 import Login from "./auth/Login";
 import ForgetPassword from "./auth/ForgetPassword";
+import { useAuth } from "../utils/useContext";
 
 gsap.registerPlugin(useGSAP);
 
@@ -16,6 +17,7 @@ const Navbar = () => {
   // =========================
 
   const [open, setOpen] = useState(false);
+  const { user, logout } = useAuth();
 
   // login | signup | null
   const [authModal, setAuthModal] = useState(null);
@@ -78,20 +80,30 @@ const Navbar = () => {
 
           <div className="hidden items-center gap-4 md:flex">
             <ThemeToggle />
+            {user ? (
+              <button
+                onClick={logout}
+                className="rounded-xl bg-blue-600 px-6 py-3 text-white"
+              >
+                Logout
+              </button>
+            ) : (
+              <>
+                <button
+                  onClick={() => setAuthModal("login")}
+                  className="font-medium text-zinc-700 transition hover:text-blue-500 dark:text-zinc-300"
+                >
+                  Login
+                </button>
 
-            <button
-              onClick={() => setAuthModal("login")}
-              className="font-medium text-zinc-700 transition hover:text-blue-500 dark:text-zinc-300"
-            >
-              Login
-            </button>
-
-            <button
-              onClick={() => setAuthModal("signup")}
-              className="rounded-xl bg-blue-600 px-5 py-2 text-white transition hover:bg-blue-700"
-            >
-              Get Started
-            </button>
+                <button
+                  onClick={() => setAuthModal("signup")}
+                  className="rounded-xl bg-blue-600 px-5 py-2 text-white transition hover:bg-blue-700"
+                >
+                  Get Started
+                </button>
+              </>
+            )}
           </div>
 
           {/* Mobile */}
@@ -126,25 +138,36 @@ const Navbar = () => {
               </li>
             ))}
 
-            <button
-              onClick={() => {
-                setAuthModal("login");
-                setOpen(false);
-              }}
-              className="font-medium text-zinc-700 dark:text-zinc-300"
-            >
-              Login
-            </button>
+            {user ? (
+              <button
+                onClick={logout}
+                className="rounded-xl bg-blue-600 px-6 py-3 text-white"
+              >
+                Logout
+              </button>
+            ) : (
+              <>
+                <button
+                  onClick={() => {
+                    setAuthModal("login");
+                    setOpen(false);
+                  }}
+                  className="font-medium text-zinc-700 dark:text-zinc-300"
+                >
+                  Login
+                </button>
 
-            <button
-              onClick={() => {
-                setAuthModal("signup");
-                setOpen(false);
-              }}
-              className="rounded-xl bg-blue-600 px-6 py-3 text-white"
-            >
-              Get Started
-            </button>
+                <button
+                  onClick={() => {
+                    setAuthModal("signup");
+                    setOpen(false);
+                  }}
+                  className="rounded-xl bg-blue-600 px-6 py-3 text-white"
+                >
+                  Get Started
+                </button>
+              </>
+            )}
           </ul>
         </div>
       </nav>
