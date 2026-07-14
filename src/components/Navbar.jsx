@@ -1,7 +1,7 @@
 import { useRef, useState } from "react";
 import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
-import { Menu, X } from "lucide-react";
+import { Menu, User, X } from "lucide-react";
 
 import ThemeToggle from "./ThemeToggle";
 import Signup from "./auth/Signup";
@@ -50,7 +50,7 @@ const Navbar = () => {
   // Navbar Links
   // =========================
 
-  const links = ["Home", "Dashboard", "Profile", "Contact"];
+  const links = ["Home", "Interview", "Contact"];
 
   return (
     <>
@@ -67,12 +67,15 @@ const Navbar = () => {
 
           <ul className="hidden gap-8 md:flex">
             {links.map((item) => (
-              <li
-                key={item}
-                className="cursor-pointer text-zinc-700 transition hover:text-blue-500 dark:text-zinc-300"
-              >
-                {item}
-              </li>
+              <a href={`/${item.toLowerCase()}`}>
+                {" "}
+                <li
+                  key={item}
+                  className="cursor-pointer text-zinc-700 transition hover:text-blue-500 dark:text-zinc-300"
+                >
+                  {item}
+                </li>
+              </a>
             ))}
           </ul>
 
@@ -81,12 +84,17 @@ const Navbar = () => {
           <div className="hidden items-center gap-4 md:flex">
             <ThemeToggle />
             {user ? (
-              <button
-                onClick={logout}
-                className="rounded-xl bg-blue-600 px-6 py-3 text-white"
-              >
-                Logout
-              </button>
+              <>
+                <button className="p-2 rounded-lg bg-zinc-200 dark:bg-zinc-800 text-zinc-900 dark:text-white transition hover:scale-110">
+                  <User size={18} />
+                </button>
+                <button
+                  onClick={logout}
+                  className="rounded-xl bg-blue-600 px-6 py-3 text-white"
+                >
+                  Logout
+                </button>
+              </>
             ) : (
               <>
                 <button
@@ -110,7 +118,11 @@ const Navbar = () => {
 
           <div className="flex items-center gap-3 md:hidden">
             <ThemeToggle />
-
+            {user ? (
+              <button className="p-2 rounded-lg bg-zinc-200 dark:bg-zinc-800 text-zinc-900 dark:text-white transition hover:scale-110">
+                <User size={18} />
+              </button>
+            ) : null}
             <button onClick={() => setOpen(!open)}>
               {open ? (
                 <X className="text-zinc-900 dark:text-white" />
