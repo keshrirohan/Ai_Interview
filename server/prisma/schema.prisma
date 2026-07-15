@@ -9,9 +9,172 @@ datasource db {
 
 
 
-model User { 
-  id    Int     @id @default(autoincrement()) 
-  email String  @unique
-  name  String?
- 
-} 
+// ===========================
+// User Model
+// ===========================
+
+model User {
+  // Primary Key
+  id String @id @default(cuid())
+
+  // User Information
+  name     String
+  email    String @unique
+  password String
+
+  // SaaS Plan
+  plan             Plan @default(FREE)
+  interviewsUsed   Int  @default(0)
+  interviewsLimit  Int  @default(20)
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // ==========================
+  // Relations
+  // ==========================
+
+  interviews   Interview[]
+  resume        Resume?
+  subscription  Subscription?
+  payments      Payment[]
+  overallReport OverallReport?
+}
+
+model Interview {
+  id              String   @id @default(cuid())
+
+  userId          String 
+  user            User     @relation(fields: [userId], references: [id])
+
+  company         String?
+  role            String
+
+  jobDescription  String
+
+  difficulty      Difficulty
+
+  status          InterviewStatus @default(IN_PROGRESS)
+
+  startedAt       DateTime @default(now())
+  completedAt     DateTime?
+
+  report          Report?
+}
+
+
+model Report {
+
+  id String @id @default(cuid())
+
+  interviewId String @unique
+  interview Interview @relation(fields:[interviewId],references:[id])
+
+  score Float
+
+  communication Float
+
+  technical Float
+
+  confidence Float
+
+  strengths String
+
+  weaknesses String
+
+  aiFeedback String
+
+  createdAt DateTime @default(now())
+}
+
+
+model OverallReport{
+
+  id String @id @default(cuid())
+
+  userId String @unique
+
+  user User @relation(fields:[userId],references:[id])
+
+  totalInterviews Int
+
+  averageScore Float
+
+  highestScore Float
+
+  lowestScore Float
+
+  strongestSkill String?
+
+  weakestSkill String?
+
+  updatedAt DateTime @updatedAt
+}
+
+
+model Resume{
+
+  id String @id @default(cuid())
+
+  userId String @unique
+
+  user User @relation(fields:[userId],references:[id])
+
+  fileUrl String
+
+  parsedText String
+
+  uploadedAt DateTime @default(now())
+}
+
+model Subscription{
+
+  id String @id @default(cuid())
+
+  userId String @unique
+
+  user User @relation(fields:[userId],references:[id])
+
+  plan Plan
+
+  active Boolean @default(true)
+
+  expiresAt DateTime?
+}
+
+
+model Payment{
+
+  id String @id @default(cuid())
+
+  userId String
+
+  user User @relation(fields:[userId],references:[id])
+
+  amount Float
+
+  status String
+
+  paymentId String
+
+  createdAt DateTime @default(now())
+}
+
+
+
+enum Plan{
+  FREE
+  PRO
+}
+
+enum Difficulty{
+  EASY
+  MEDIUM
+  HARD
+}
+
+enum InterviewStatus{
+  IN_PROGRESS
+  COMPLETED
+}
