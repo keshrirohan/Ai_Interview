@@ -50,6 +50,7 @@ model Interview {
 
   company         String?
   
+  conversation   Json?
 
   jobDescription  String
 

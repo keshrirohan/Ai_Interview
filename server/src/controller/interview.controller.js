@@ -24,21 +24,15 @@ export const startInterviewController = async (req, res) => {
 // Generate First Interview Question
 export const generateInterviewQuestion = async (req, res) => {
   try {
-    // Get interviewId from request body
-    console.log("Request Body:", req.body);
-    const { interviewId } = req.body;
+    const { interviewId } = req.params;
 
-    // Generate question
-    const question = await getQuestion(interviewId);
+    const question = await getFirstQuestion(interviewId);
 
-    // Send response
-    res.status(200).json({
+    res.json({
       success: true,
       question,
     });
   } catch (error) {
-    console.error("Generate Question Error:", error.message);
-
     res.status(500).json({
       success: false,
       message: error.message,

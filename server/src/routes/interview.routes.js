@@ -10,6 +10,10 @@ const router = express.Router();
 
 router.post("/start", authMiddleware, startInterviewController);
 
-router.post("/question", authMiddleware, generateInterviewQuestion);
+router.post(
+  "/:interviewId/question",
+  authMiddleware,
+  generateInterviewQuestion,
+);
 
 export default router;

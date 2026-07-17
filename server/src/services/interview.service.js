@@ -1,5 +1,5 @@
 import { prisma } from "../../lib/prisma.js";
-import { generateQuestion } from "./groq.service.js";
+
 
 // Start Interview Service
 export const startInterview = async (userId, data) => {
@@ -40,7 +40,9 @@ export const startInterview = async (userId, data) => {
   return interview;
 };
 
-export const getQuestion = async (interviewId) => {
+import { generateFirstQuestion } from "./groq.service.js";
+
+export const getFirstQuestion = async (interviewId) => {
   // Find interview
   const interview = await prisma.interview.findUnique({
     where: {
@@ -48,17 +50,35 @@ export const getQuestion = async (interviewId) => {
     },
   });
 
-  // Check interview exists
   if (!interview) {
-    throw new Error("Interview not found.");
+    throw new Error("Interview not found");
   }
 
-  // Get AI question
-  const question = await generateQuestion(
+  // Generate first question
+  const aiResponse = await generateFirstQuestion(
     interview.jobDescription,
     interview.difficulty,
   );
 
-  // Return question
-  return question;
+  // Create conversation
+  const conversation = [
+    {
+      question: aiResponse.question,
+      answer: null,
+      score: null,
+      feedback: null,
+    },
+  ];
+
+  // Save conversation
+  await prisma.interview.update({
+    where: {
+      id: interviewId,
+    },
+    data: {
+      conversation,
+    },
+  });
+
+  return aiResponse.question;
 };
