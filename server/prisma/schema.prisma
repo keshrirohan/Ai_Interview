@@ -49,7 +49,7 @@ model Interview {
   user            User     @relation(fields: [userId], references: [id])
 
   company         String?
-  role            String
+  
 
   jobDescription  String
 

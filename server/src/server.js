@@ -6,8 +6,9 @@ import dotenv from "dotenv";
 import { prisma } from "../lib/prisma.js";
 dotenv.config();
 
-import authRouter from "./routes/auth.js";
+import authRouter from "./routes/auth.routes.js";
 import cookieParser from "cookie-parser";
+import interviewRouter from "./routes/interview.routes.js";
 
 import bcrypt from "bcrypt";
 
@@ -24,6 +25,8 @@ app.get("/", (req, res) => {
 });
 
 app.use("/api/auth", authRouter);
+app.use("/api/interview", interviewRouter);
+
 const PORT = process.env.PORT || 5000;
 
 // Start the server

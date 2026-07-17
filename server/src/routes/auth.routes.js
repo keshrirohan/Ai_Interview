@@ -2,14 +2,13 @@ import express from "express";
 import Token from "../middlewares/Tokengenerate.js";
 import { prisma } from "../../lib/prisma.js";
 import bcrypt from "bcrypt";
-const app = express();
 
 const router = express.Router();
 
 router.post("/login", async (req, res) => {
   const { email, password } = req.body;
 
-  console.log(req.body);
+ 
   try {
     const user = await prisma.user.findUnique({
       where: { email },
@@ -20,10 +19,6 @@ router.post("/login", async (req, res) => {
         message: "Please check your email and try again.",
       });
     }
-
-    console.log(password);
-    console.log(user);
-    console.log(user.password);
 
     const isMatch = await bcrypt.compare(password, user.password);
     if (user && !isMatch) {
@@ -84,7 +79,7 @@ router.post("/register", async (req, res) => {
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
-    console.log("Hashed Password:", hashedPassword);
+ 
     const newUser = await prisma.user.create({
       data: {
         name,
@@ -93,7 +88,7 @@ router.post("/register", async (req, res) => {
       },
     });
 
-    console.log("New User Created:", newUser);
+  
     const token = Token(newUser);
 
     res
