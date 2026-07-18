@@ -41,7 +41,7 @@ Return JSON:
       type: "json_object",
     },
   });
-
+  console.log("Groq response:", response.choices[0].message.content);
   return JSON.parse(response.choices[0].message.content);
 };
 

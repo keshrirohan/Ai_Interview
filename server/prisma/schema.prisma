@@ -48,11 +48,14 @@ model Interview {
   userId          String 
   user            User     @relation(fields: [userId], references: [id])
 
-  company         String?
+ 
   
   conversation   Json?
 
   jobDescription  String
+
+  currentQuestion Int @default(1)
+  maxQuestions    Int @default(10)
 
   difficulty      Difficulty
 
@@ -72,19 +75,22 @@ model Report {
   interviewId String @unique
   interview Interview @relation(fields:[interviewId],references:[id])
 
+  // Overall Score
   score Float
 
+  // Individual Scores
   communication Float
-
   technical Float
-
   confidence Float
+  problemSolving Float
 
+  // AI Analysis
   strengths String
-
   weaknesses String
+  recommendations String
 
-  aiFeedback String
+  // Overall Summary
+  summary String
 
   createdAt DateTime @default(now())
 }

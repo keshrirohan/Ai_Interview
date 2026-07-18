@@ -34,7 +34,7 @@ export const generateInterviewQuestion = async (req, res) => {
     console.log("Generated question:", question);
     res.json({
       success: true,
-      question,
+      data: question,
     });
   } catch (error) {
     res.status(500).json({
@@ -43,8 +43,6 @@ export const generateInterviewQuestion = async (req, res) => {
     });
   }
 };
-
-
 
 // Process Candidate Answer
 export const processInterviewController = async (req, res) => {

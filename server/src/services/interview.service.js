@@ -80,7 +80,7 @@ export const getFirstQuestion = async (interviewId) => {
     },
   });
 
-  return aiResponse.question;
+  return aiResponse;
 };
 
 import { processAnswer } from "./groq.service.js";
@@ -125,12 +125,12 @@ export const processInterview = async (interviewId, answer) => {
 
   // 6. Update score & feedback
   conversation[lastIndex].score = aiResponse.score;
-
   conversation[lastIndex].feedback = aiResponse.feedback;
 
   // 7. Add next question
   conversation.push({
     question: aiResponse.nextQuestion,
+    expectedAnswer: aiResponse.expectedAnswer,
     answer: null,
     score: null,
     feedback: null,
