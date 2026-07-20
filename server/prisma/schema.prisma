@@ -75,21 +75,22 @@ model Report {
   interviewId String @unique
   interview Interview @relation(fields:[interviewId],references:[id])
 
-  // Overall Score
   score Float
 
-  // Individual Scores
   communication Float
+
   technical Float
+
   confidence Float
+
   problemSolving Float
 
-  // AI Analysis
-  strengths String
-  weaknesses String
-  recommendations String
+  strengths Json
 
-  // Overall Summary
+  weaknesses Json
+
+  recommendations Json
+
   summary String
 
   createdAt DateTime @default(now())

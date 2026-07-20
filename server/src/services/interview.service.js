@@ -1,5 +1,5 @@
 import { prisma } from "../../lib/prisma.js";
-
+import { generateFinalReport, generateFirstQuestion, processAnswer } from "./groq.service.js";
 // Start Interview Service
 export const startInterview = async (userId, data) => {
   const { jobDescription, difficulty } = data;
@@ -38,8 +38,6 @@ export const startInterview = async (userId, data) => {
 
   return interview;
 };
-
-import { generateFirstQuestion } from "./groq.service.js";
 
 export const getFirstQuestion = async (interviewId) => {
   // Find interview
@@ -83,7 +81,7 @@ export const getFirstQuestion = async (interviewId) => {
   return aiResponse;
 };
 
-import { processAnswer } from "./groq.service.js";
+
 
 // Process Interview Answer
 export const processInterview = async (interviewId, answer) => {
@@ -107,7 +105,6 @@ export const processInterview = async (interviewId, answer) => {
     throw new Error("No interview question found.");
   }
 
-  console.log("Current conversation:", conversation);
   // 3. Get last question
   const lastIndex = conversation.length - 1;
 
@@ -121,11 +118,59 @@ export const processInterview = async (interviewId, answer) => {
     conversation,
   );
 
-  console.log("AI Response:", aiResponse);
-
   // 6. Update score & feedback
   conversation[lastIndex].score = aiResponse.score;
   conversation[lastIndex].feedback = aiResponse.feedback;
+
+  if (conversation.length >= interview.maxQuestions) {
+    // Generate Final Report
+    const report = await generateFinalReport(
+      interview.jobDescription,
+      interview.difficulty,
+      conversation,
+    );
+
+    // Save Report
+    await prisma.report.create({
+      data: {
+        interviewId,
+
+        score: report.score,
+
+        communication: report.communication,
+
+        technical: report.technical,
+
+        confidence: report.confidence,
+
+        problemSolving: report.problemSolving,
+
+        strengths: report.strengths,
+
+        weaknesses: report.weaknesses,
+
+        recommendations: report.recommendations,
+
+        summary: report.summary,
+      },
+    });
+
+    await prisma.interview.update({
+      where: {
+        id: interviewId,
+      },
+      data: {
+        conversation,
+        status: "COMPLETED",
+        completedAt: new Date(),
+      },
+    });
+
+    return {
+      completed: true,
+      report,
+    };
+  }
 
   // 7. Add next question
   conversation.push({
@@ -136,7 +181,7 @@ export const processInterview = async (interviewId, answer) => {
     feedback: null,
   });
 
-  // 8. Save updated conversation
+  // Save Conversation
   await prisma.interview.update({
     where: {
       id: interviewId,
@@ -146,6 +191,13 @@ export const processInterview = async (interviewId, answer) => {
     },
   });
 
-  // 9. Return response
-  return aiResponse;
+  return {
+    completed: false,
+
+    score: aiResponse.score,
+
+    feedback: aiResponse.feedback,
+
+    nextQuestion: aiResponse.nextQuestion,
+  };
 };

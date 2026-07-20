@@ -105,3 +105,72 @@ Return ONLY JSON.
     throw new Error("Failed to process interview.");
   }
 };
+
+// Generate Final Interview Report
+export const generateFinalReport = async (
+  jobDescription,
+  difficulty,
+  conversation,
+) => {
+  try {
+    const prompt = `
+You are a Senior Software Engineering Interviewer.
+
+Job Description:
+${jobDescription}
+
+Difficulty:
+${difficulty}
+
+Interview Conversation:
+${JSON.stringify(conversation)}
+
+Analyze the complete interview.
+
+Return ONLY valid JSON.
+
+{
+  "score": 8.5,
+  "technical": 8,
+  "communication": 9,
+  "problemSolving": 8,
+  "confidence": 8,
+
+  "strengths": [
+    "..."
+  ],
+
+  "weaknesses": [
+    "..."
+  ],
+
+  "recommendations": [
+    "..."
+  ],
+
+  "summary": "..."
+}
+`;
+
+    const response = await groqClient.chat.completions.create({
+      model: "llama-3.3-70b-versatile",
+
+      messages: [
+        {
+          role: "user",
+          content: prompt,
+        },
+      ],
+
+      response_format: {
+        type: "json_object",
+      },
+    });
+
+    return JSON.parse(response.choices[0].message.content);
+  } catch (error) {
+    console.log(error);
+
+    throw new Error("Failed to generate interview report.");
+  }
+};
