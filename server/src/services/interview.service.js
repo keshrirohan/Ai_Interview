@@ -1,5 +1,10 @@
 import { prisma } from "../../lib/prisma.js";
-import { generateFinalReport, generateFirstQuestion, processAnswer } from "./groq.service.js";
+import { PLAN_LIMITS } from "../utils/planLimit.js";
+import {
+  generateFinalReport,
+  generateFirstQuestion,
+  processAnswer,
+} from "./groq.service.js";
 // Start Interview Service
 export const startInterview = async (userId, data) => {
   const { jobDescription, difficulty } = data;
@@ -12,31 +17,47 @@ export const startInterview = async (userId, data) => {
       },
     });
 
-    if (!user) {
-      throw new Error("User not found");
+    if (user.interviewsUsed >= limit) {
+      throw new Error(
+        "Interview limit reached. Please upgrade your subscription.",
+      );
     }
 
-    // Free plan limit
-    if (user.plan === "FREE" && user.interviewsUsed >= user.interviewsLimit) {
-      throw new Error("Free interview limit reached.");
+    const limit = PLAN_LIMITS[user.plan];
+
+    if (user.interviewsUsed >= limit) {
+      throw new Error(
+        `Interview limit reached. Your ${user.plan} plan allows only ${limit} interviews. Please upgrade your subscription.`,
+      );
     }
 
     // Create Interview Session
-    const interview = await prisma.Interview.create({
+    const interview = await prisma.interview.create({
       data: {
         userId,
         jobDescription,
         difficulty,
       },
     });
-    console.log("Interview created:", interview);
+
+    await prisma.user.update({
+      where: {
+        id: userId,
+      },
+      data: {
+        interviewsUsed: {
+          increment: 1,
+        },
+      },
+    });
+
     return interview;
   } catch (error) {
-    console.error("Error starting interview:", error);
+    console.error("Error starting interview:", error.message);
     throw new Error("Failed to start interview.");
   }
 
-  return interview;
+  return;
 };
 
 export const getFirstQuestion = async (interviewId) => {
@@ -80,8 +101,6 @@ export const getFirstQuestion = async (interviewId) => {
 
   return aiResponse;
 };
-
-
 
 // Process Interview Answer
 export const processInterview = async (interviewId, answer) => {

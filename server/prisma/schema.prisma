@@ -25,7 +25,7 @@ model User {
   // SaaS Plan
   plan             Plan @default(FREE)
   interviewsUsed   Int  @default(0)
-  interviewsLimit  Int  @default(20)
+  
 
   // Timestamps
   createdAt DateTime @default(now())
@@ -173,7 +173,8 @@ model Payment{
 
 enum Plan{
   FREE
-  PRO
+  GOLD
+  PLATINUM
 }
 
 enum Difficulty{
