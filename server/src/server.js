@@ -13,7 +13,13 @@ import dashboardRoutes from "./routes/dashboard.routes.js";
 import bcrypt from "bcrypt";
 
 const app = express();
-app.use(cors());
+
+app.use(
+  cors({
+    origin: process.env.Frontend_URL,
+    credentials: true,
+  }),
+);
 app.use(cookieParser());
 app.use(express.json());
 

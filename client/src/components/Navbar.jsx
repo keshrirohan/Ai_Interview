@@ -52,6 +52,25 @@ const Navbar = () => {
 
   const links = ["Home", "Interview", "Contact"];
 
+  const handleLogout = async () => {
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_BACKEND_URL}/api/auth/logout`,
+        {
+          method: "POST",
+          credentials: "include", // Include cookies in the request
+        },
+      );
+
+      if (!response.ok) {
+        throw new Error("Logout failed");
+      }
+      logout(); // Update the context to reflect the user is logged out
+    } catch (error) {
+      console.error("Logout failed:", error);
+    }
+  };
+
   return (
     <>
       <nav className="fixed top-0 left-0 z-50 w-full border-b border-zinc-200 bg-white/70 backdrop-blur-xl dark:border-zinc-800 dark:bg-zinc-950/70">
@@ -89,7 +108,7 @@ const Navbar = () => {
                   <User size={18} />
                 </button>
                 <button
-                  onClick={logout}
+                  onClick={handleLogout}
                   className="rounded-xl bg-blue-600 px-6 py-3 text-white"
                 >
                   Logout
@@ -152,7 +171,7 @@ const Navbar = () => {
 
             {user ? (
               <button
-                onClick={logout}
+                onClick={handleLogout}
                 className="rounded-xl bg-blue-600 px-6 py-3 text-white"
               >
                 Logout

@@ -1,6 +1,8 @@
 import { useState } from "react";
+import { useAuth } from "../../utils/useContext";
 
 const Login = ({ openSignup, openForgot }) => {
+  const { login } = useAuth(); // Get the login function from the context
   // ==========================
   // Form State
   // ==========================
@@ -22,10 +24,34 @@ const Login = ({ openSignup, openForgot }) => {
   // ==========================
   // Handle Form Submit
   // ==========================
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
-    console.log(formData);
+    if (!formData.email || !formData.password) {
+      alert("Please fill in both email and password fields.");
+      return;
+    }
+    try {
+      const url = `${import.meta.env.VITE_BACKEND_URL}/api/auth/login`;
+      console.log("Login URL:", url);
+      const response = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(formData),
+      });
+      const data = await response.json();
+      console.log("Login response:", data);
+      login(data.user); // Update the user state in the context
+      if (!data.success) {
+        throw new Error(data.message || "Login failed");
+      }
+      // Update the user state in the context
+      // Return the response data to the caller
+    } catch (error) {
+      console.error("Error during login:", error);
+    }
 
     // Login API Here
   };
