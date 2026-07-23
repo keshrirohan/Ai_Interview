@@ -9,7 +9,7 @@ dotenv.config();
 import authRouter from "./routes/auth.routes.js";
 import cookieParser from "cookie-parser";
 import interviewRouter from "./routes/interview.routes.js";
-
+import dashboardRoutes from "./routes/dashboard.routes.js";
 import bcrypt from "bcrypt";
 
 const app = express();
@@ -26,7 +26,7 @@ app.get("/", (req, res) => {
 
 app.use("/api/auth", authRouter);
 app.use("/api/interview", interviewRouter);
-
+app.use("/api/dashboard", dashboardRoutes);
 
 const PORT = process.env.PORT || 5000;
 

@@ -16,14 +16,13 @@ export const startInterview = async (userId, data) => {
         id: userId,
       },
     });
+    const limit = PLAN_LIMITS[user.plan];
 
     if (user.interviewsUsed >= limit) {
       throw new Error(
         "Interview limit reached. Please upgrade your subscription.",
       );
     }
-
-    const limit = PLAN_LIMITS[user.plan];
 
     if (user.interviewsUsed >= limit) {
       throw new Error(
@@ -39,6 +38,8 @@ export const startInterview = async (userId, data) => {
         difficulty,
       },
     });
+
+  
 
     await prisma.user.update({
       where: {

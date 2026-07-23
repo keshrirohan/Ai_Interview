@@ -105,18 +105,26 @@ model OverallReport{
 
   user User @relation(fields:[userId],references:[id])
 
+  overallScore Float
+
+  technical Float
+
+  communication Float
+
+  confidence Float
+
+  problemSolving Float
+
+  strengths Json
+
+  weaknesses Json
+
+  recommendations Json
+
+  summary String
+
   totalInterviews Int
-
-  averageScore Float
-
-  highestScore Float
-
-  lowestScore Float
-
-  strongestSkill String?
-
-  weakestSkill String?
-
+  
   updatedAt DateTime @updatedAt
 }
 
