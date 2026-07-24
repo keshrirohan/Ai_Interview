@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useAuth } from "../../utils/useContext";
 
-const Login = ({ openSignup, openForgot }) => {
+const Login = ({ openSignup, openForgot, closeModal }) => {
   const { login } = useAuth(); // Get the login function from the context
   // ==========================
   // Form State
@@ -36,6 +36,7 @@ const Login = ({ openSignup, openForgot }) => {
       console.log("Login URL:", url);
       const response = await fetch(url, {
         method: "POST",
+        credentials: "include", // Include credentials for cookie handling
         headers: {
           "Content-Type": "application/json",
         },
@@ -44,16 +45,14 @@ const Login = ({ openSignup, openForgot }) => {
       const data = await response.json();
       console.log("Login response:", data);
       login(data.user); // Update the user state in the context
+
+      closeModal();
       if (!data.success) {
         throw new Error(data.message || "Login failed");
       }
-      // Update the user state in the context
-      // Return the response data to the caller
     } catch (error) {
       console.error("Error during login:", error);
     }
-
-    // Login API Here
   };
 
   return (

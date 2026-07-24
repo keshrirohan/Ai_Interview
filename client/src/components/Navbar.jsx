@@ -223,11 +223,15 @@ const Navbar = () => {
               <Login
                 openSignup={() => setAuthModal("signup")}
                 openForgot={() => setAuthModal("forgot")}
+                closeModal={() => setAuthModal(null)}
               />
             )}
 
             {authModal === "signup" && (
-              <Signup openLogin={() => setAuthModal("login")} />
+              <Signup
+                openLogin={() => setAuthModal("login")}
+                closeModal={() => setAuthModal(null)}
+              />
             )}
 
             {authModal === "forgot" && (

@@ -1,14 +1,13 @@
 import { useState } from "react";
 
-const Signup = ({ openLogin }) => {
+const Signup = ({ openLogin, closeModal }) => {
   // ==========================
   // Form State
   // ==========================
   const [formData, setFormData] = useState({
-    username: "",
+    name: "",
     email: "",
     password: "",
-    confirmPassword: "",
   });
 
   // ==========================
@@ -24,18 +23,29 @@ const Signup = ({ openLogin }) => {
   // ==========================
   // Handle Form Submit
   // ==========================
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Check if passwords match
-    if (formData.password !== formData.confirmPassword) {
-      alert("Passwords do not match!");
-      return;
+    try {
+      const url = `${import.meta.env.VITE_BACKEND_URL}/api/auth/register`;
+      console.log("Signup URL:", url);
+      const response = await fetch(url, {
+        method: "POST",
+        credentials: "include", // Include credentials for cookie handling
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(formData),
+      });
+      const data = await response.json();
+      if (!data.success) {
+        throw new Error(data.message || "Signup failed");
+      }
+      closeModal();
+      console.log("Signup response:", data);
+    } catch (error) {
+      console.error("Error during signup:", error);
     }
-
-    console.log(formData);
-
-    // Signup API Here
   };
 
   return (
@@ -58,22 +68,22 @@ const Signup = ({ openLogin }) => {
       ========================== */}
 
       <form onSubmit={handleSubmit} className="mt-8 space-y-5">
-        {/* Username */}
+        {/* name */}
 
         <div>
           <label
-            htmlFor="username"
+            htmlFor="name"
             className="mb-2 block text-sm font-medium text-zinc-700 dark:text-zinc-300"
           >
-            Username
+            Name
           </label>
 
           <input
-            id="username"
-            name="username"
+            id="name"
+            name="name"
             type="text"
-            placeholder="Enter your username"
-            value={formData.username}
+            placeholder="Enter your name"
+            value={formData.name}
             onChange={handleChange}
             required
             className="w-full rounded-lg border border-zinc-300 bg-white px-4 py-3 text-zinc-900 placeholder:text-zinc-400 outline-none transition-all duration-300 focus:border-blue-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white dark:placeholder:text-zinc-500"
@@ -126,7 +136,7 @@ const Signup = ({ openLogin }) => {
 
         {/* Confirm Password */}
 
-        <div>
+        {/* <div>
           <label
             htmlFor="confirmPassword"
             className="mb-2 block text-sm font-medium text-zinc-700 dark:text-zinc-300"
@@ -144,7 +154,7 @@ const Signup = ({ openLogin }) => {
             required
             className="w-full rounded-lg border border-zinc-300 bg-white px-4 py-3 text-zinc-900 placeholder:text-zinc-400 outline-none transition-all duration-300 focus:border-blue-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white dark:placeholder:text-zinc-500"
           />
-        </div>
+        </div> */}
 
         {/* Signup Button */}
 
