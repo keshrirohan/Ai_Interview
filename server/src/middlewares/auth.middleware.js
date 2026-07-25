@@ -4,7 +4,7 @@ import jwt from "jsonwebtoken";
 const authMiddleware = (req, res, next) => {
   try {
     // Get token from request header
-    const token = req.headers.authorization?.split(" ")[1];
+    const token = req.cookies.token || req.headers.authorization?.split(" ")[1];
 
     // Check if token exists
     if (!token) {
@@ -19,7 +19,7 @@ const authMiddleware = (req, res, next) => {
 
     // Save user data in request
     req.user = decoded;
-   
+
     // Go to next middleware/controller
     next();
   } catch (error) {

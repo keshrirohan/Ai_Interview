@@ -1,6 +1,47 @@
+import { useState } from "react";
 import JDs from "../components/JDs";
+import {useNavigate} from "react-router-dom";
 
 const NewInterview = () => {
+  const navigate = useNavigate();
+
+  const [invdata, setInvdata] = useState({
+    jobDescription: "",
+    difficulty: "MEDIUM",
+  });
+
+  const handleonchange = (e) => {
+    setInvdata({
+      ...invdata,
+      [e.target.name]: e.target.value,
+    });
+  };
+
+  const handleGenerateInterview = async (e) => {
+    e.preventDefault();
+    const url = `${import.meta.env.VITE_BACKEND_URL}/api/interview/start`;
+    try {
+      const response = await fetch(url, {
+        method: "POST",
+        credentials: "include", // Include credentials for cookie handling
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(invdata),
+      });
+      const result = await response.json();
+      console.log("Generate Interview response:", result);
+      if (!result.success) {
+        throw new Error(result.message || "Failed to generate interview");
+      }
+      console.log("Generate Interview response:", result.data);
+      console.log("Before navigate");
+      navigate(`/interview/${result.data.id}`);
+    } catch (error) {
+      console.error("Error during interview generation:", error.message);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-zinc-50 pt-24 pb-10 transition-colors duration-300 dark:bg-zinc-950">
       <div className="mx-auto max-w-5xl px-6">
@@ -26,6 +67,9 @@ const NewInterview = () => {
               rows={10}
               placeholder="Paste the complete job description here..."
               className="w-full resize-none rounded-xl border border-zinc-300 bg-white p-4 text-zinc-900 outline-none transition focus:border-blue-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white"
+              name="jobDescription"
+              value={invdata.jobDescription}
+              onChange={handleonchange}
             />
           </div>
 
@@ -41,15 +85,24 @@ const NewInterview = () => {
             />
           </div>
 
-          <select required defaultValue={"Medium"} className="mb-6 block w-full rounded-lg border border-zinc-300 bg-zinc-50 p-3 text-sm text-zinc-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
-            <option value="Easy">Easy </option>
-            <option value="Medium">Medium</option>
-            <option value="Hard">Hard</option>
+          <select
+            required
+            className="mb-6 block w-full rounded-lg border border-zinc-300 bg-zinc-50 p-3 text-sm text-zinc-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300"
+            name="difficulty"
+            value={invdata.difficulty}
+            onChange={handleonchange}
+          >
+            <option value="EASY">Easy</option>
+            <option value="MEDIUM">Medium</option>
+            <option value="HARD">Hard</option>
           </select>
 
           {/* Buttons */}
           <div className="flex flex-col gap-4 sm:flex-row">
-            <button className="rounded-xl bg-blue-600 px-6 py-3 font-medium text-white transition hover:bg-blue-700">
+            <button
+              className="rounded-xl bg-blue-600 px-6 py-3 font-medium text-white transition hover:bg-blue-700"
+              onClick={handleGenerateInterview}
+            >
               Generate Interview
             </button>
 

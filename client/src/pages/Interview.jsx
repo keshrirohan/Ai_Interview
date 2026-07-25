@@ -1,8 +1,35 @@
+import { useParams } from "react-router-dom";
 import AiPreview from "../components/AiPreview";
 import CameraPreview from "../components/CameraPreview";
+import { useEffect } from "react";
 
 const Interview = () => {
   const difficulty = "hard"; // Replace with actual difficulty value
+  const { id } = useParams(); // Get the interview ID from the URL
+
+  console.log("Interview ID from URL:", id); // Log the interview ID for debugging
+
+  useEffect(() => {
+    const fetchInterviewDetails = async () => {
+      try {
+        const response = await fetch(
+          `${import.meta.env.VITE_BACKEND_URL}/api/interview/${id}`,
+          {
+            credentials: "include", // Include credentials for cookie handling
+          },
+        );
+        const result = await response.json();
+        if (!result.success) {
+          throw new Error(result.message || "Failed to fetch interview details");
+        }
+        console.log("Fetched interview details:", result.data); // Log the fetched interview details for debugging
+      } catch (error) {
+        console.error("Error fetching interview details:", error);
+      }
+    };
+
+    fetchInterviewDetails();
+  }, [id]);
 
   return (
     <div className="min-h-screen bg-zinc-50 transition-colors duration-300 dark:bg-zinc-950">

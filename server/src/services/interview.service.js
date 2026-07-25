@@ -39,8 +39,6 @@ export const startInterview = async (userId, data) => {
       },
     });
 
-  
-
     await prisma.user.update({
       where: {
         id: userId,
@@ -54,7 +52,7 @@ export const startInterview = async (userId, data) => {
 
     return interview;
   } catch (error) {
-    console.error("Error starting interview:", error.message);
+    console.error("Error starting interview:", error);
     throw new Error("Failed to start interview.");
   }
 

@@ -17,8 +17,8 @@ function App() {
       <Route path="/" element={<Home />} />
       <Route path="/home" element={<Home />} />
       <Route path="/contact" element={<Contact />} />
+      <Route path="/interview" element={<NewInterview />} />
       <Route element={<PrivateRoutes />}>
-        <Route path="/interview" element={<NewInterview />} />
         <Route path="/interview/:id" element={<Interview />} />
         <Route path="/profile/:id" element={<Profile />} />
       </Route>

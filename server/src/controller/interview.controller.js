@@ -17,6 +17,7 @@ export const startInterviewController = async (req, res) => {
       data: interview,
     });
   } catch (error) {
+    console.error("Start Interview Error:", error);
     res.status(500).json({
       success: false,
       message: error.message,
