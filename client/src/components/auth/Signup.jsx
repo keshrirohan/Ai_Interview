@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { errorToast, successToast } from "../../utils/toast";
 
 const Signup = ({ openLogin, closeModal }) => {
   // ==========================
@@ -41,9 +42,11 @@ const Signup = ({ openLogin, closeModal }) => {
       if (!data.success) {
         throw new Error(data.message || "Signup failed");
       }
+      successToast("Account created successfully!");
       closeModal();
       console.log("Signup response:", data);
     } catch (error) {
+      errorToast(error.message || "Failed to create account");
       console.error("Error during signup:", error);
     }
   };

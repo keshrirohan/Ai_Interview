@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useAuth } from "../../utils/useContext";
+import { errorToast, successToast } from "../../utils/toast";
 
 const Login = ({ openSignup, openForgot, closeModal }) => {
   const { login } = useAuth(); // Get the login function from the context
@@ -42,12 +43,15 @@ const Login = ({ openSignup, openForgot, closeModal }) => {
         },
         body: JSON.stringify(formData),
       });
+
       const data = await response.json();
       console.log("Login response:", data);
       login(data.user); // Update the user state in the context
 
       closeModal();
+      successToast("Login successful!"); // Show success toast
       if (!data.success) {
+        errorToast(data.message); // Show error toast
         throw new Error(data.message || "Login failed");
       }
     } catch (error) {
