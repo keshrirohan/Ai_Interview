@@ -1,6 +1,6 @@
 import { useState } from "react";
 import JDs from "../components/JDs";
-import {useNavigate} from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 const NewInterview = () => {
   const navigate = useNavigate();
@@ -23,7 +23,7 @@ const NewInterview = () => {
     try {
       const response = await fetch(url, {
         method: "POST",
-        credentials: "include", // Include credentials for cookie handling
+        credentials: "include",
         headers: {
           "Content-Type": "application/json",
         },

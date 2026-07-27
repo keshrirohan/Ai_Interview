@@ -20,9 +20,10 @@ const Interview = () => {
         );
         const result = await response.json();
         if (!result.success) {
-          throw new Error(result.message || "Failed to fetch interview details");
+          throw new Error(
+            result.message || "Failed to fetch interview details",
+          );
         }
-        console.log("Fetched interview details:", result.data); // Log the fetched interview details for debugging
       } catch (error) {
         console.error("Error fetching interview details:", error);
       }
