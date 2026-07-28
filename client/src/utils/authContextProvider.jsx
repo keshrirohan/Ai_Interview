@@ -3,6 +3,7 @@ import { AuthContext } from "./useContext";
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -15,12 +16,14 @@ export const AuthProvider = ({ children }) => {
         );
 
         const data = await res.json();
-        console.log("AuthProvider checkAuth response:", data);
+
         if (data.success) {
           setUser(data.user);
         }
       } catch (error) {
         console.log(error);
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -36,7 +39,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, logout }}>
+    <AuthContext.Provider value={{ user, login, logout, loading }}>
       {children}
     </AuthContext.Provider>
   );

@@ -1,16 +1,17 @@
 import { useParams } from "react-router-dom";
-import AiPreview from "../components/AiPreview";
-import CameraPreview from "../components/CameraPreview";
+// import AiPreview from "../components/AiPreview";
+// import CameraPreview from "../components/CameraPreview";
 import { useEffect } from "react";
 
 const Interview = () => {
   const difficulty = "hard"; // Replace with actual difficulty value
   const { id } = useParams(); // Get the interview ID from the URL
 
-  console.log("Interview ID from URL:", id); // Log the interview ID for debugging
+  console.log("Interview ID from URL:", id);
 
   useEffect(() => {
     const fetchInterviewDetails = async () => {
+      // Log the interview ID for debugging
       try {
         const response = await fetch(
           `${import.meta.env.VITE_BACKEND_URL}/api/interview/${id}`,
@@ -19,11 +20,13 @@ const Interview = () => {
           },
         );
         const result = await response.json();
+        console.log("Fetched interview details:", result); // Log the fetched interview details for debugging
         if (!result.success) {
           throw new Error(
             result.message || "Failed to fetch interview details",
           );
         }
+        console.log("Interview details fetched successfully:", result.data); // Log the fetched interview details for debugging
       } catch (error) {
         console.error("Error fetching interview details:", error);
       }
@@ -97,11 +100,11 @@ const Interview = () => {
         {/* Interview Panels */}
         <div className="mt-8 grid gap-6 lg:grid-cols-2">
           <div className="overflow-hidden rounded-2xl border border-zinc-200 shadow-sm dark:border-zinc-800">
-            <AiPreview />
+            {/* <AiPreview /> */}
           </div>
 
           <div className="overflow-hidden rounded-2xl border border-zinc-200 shadow-sm dark:border-zinc-800">
-            <CameraPreview />
+            {/* <CameraPreview /> */}
           </div>
         </div>
 

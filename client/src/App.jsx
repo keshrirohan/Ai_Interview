@@ -18,8 +18,8 @@ function App() {
       <Route path="/home" element={<Home />} />
       <Route path="/contact" element={<Contact />} />
       <Route path="/interview" element={<NewInterview />} />
+      <Route path="/interview/:id" element={<Interview />} />
       <Route element={<PrivateRoutes />}>
-        <Route path="/interview/:id" element={<Interview />} />
         <Route path="/profile/:id" element={<Profile />} />
       </Route>
       <Route path="*" element={<NotFound />} />

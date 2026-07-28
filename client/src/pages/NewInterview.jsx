@@ -36,6 +36,7 @@ const NewInterview = () => {
       }
       console.log("Generate Interview response:", result.data);
       console.log("Before navigate");
+      console.log("Navigating url:", `/interview/${result.data.id}`);
       navigate(`/interview/${result.data.id}`);
     } catch (error) {
       console.error("Error during interview generation:", error.message);
