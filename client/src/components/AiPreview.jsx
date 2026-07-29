@@ -1,4 +1,4 @@
-const AiPreview = () => {
+const AiPreview = ({ question }) => {
   return (
     <section className="flex h-full w-full flex-col items-center justify-center gap-8 rounded-2xl border border-zinc-200 bg-zinc-100 p-6 transition-colors duration-300 dark:border-zinc-800 dark:bg-zinc-900">
       {/* AI Avatar */}
@@ -24,7 +24,7 @@ const AiPreview = () => {
         </p>
 
         <h2 className="text-center text-lg font-semibold leading-relaxed text-zinc-900 sm:text-xl md:text-2xl dark:text-zinc-100">
-          Tell me about yourself and explain why you're interested in this role.
+          {question}
         </h2>
       </div>
     </section>

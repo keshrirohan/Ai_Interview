@@ -1,31 +1,41 @@
 import { useParams } from "react-router-dom";
 import AiPreview from "../components/AiPreview";
 import CameraPreview from "../components/CameraPreview";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 const Interview = () => {
-  const { id } = useParams(); // Get the interview ID from the URL
+  // Get interview ID from the URL
+  const { id } = useParams();
+  const [question, setQuestion] = useState("hehehe");
 
-  console.log("Interview ID from URL:", id);
-  const [result, setResult] = useState(null);
+  // Store interview details fetched from the backend
+  const [result, setResult] = useState({});
 
+  // Prevent multiple calls to the start interview API
+  const hasStarted = useRef(false);
+
+  /**
+   * Fetch interview details using the interview ID.
+   * This runs whenever the interview ID changes.
+   */
   useEffect(() => {
     const fetchInterviewDetails = async () => {
-      // Log the interview ID for debugging*
       try {
         const response = await fetch(
           `${import.meta.env.VITE_BACKEND_URL}/api/interview/${id}`,
           {
-            credentials: "include", // Include credentials for cookie handling
+            credentials: "include",
           },
         );
+
         const info = await response.json();
-        console.log("Fetched interview details:", info); // Log the fetched interview details for debugging
-        setResult(info.data); // Store the fetched interview details in state
+
         if (!info.success) {
           throw new Error(info.message || "Failed to fetch interview details");
         }
-        console.log("Interview details fetched successfully:", info.data); // Log the fetched interview details for debugging
+
+        // Save interview details in state
+        setResult(info.data);
       } catch (error) {
         console.error("Error fetching interview details:", error);
       }
@@ -34,12 +44,55 @@ const Interview = () => {
     fetchInterviewDetails();
   }, [id]);
 
-  console.log("Fetched interview details:", result); // Log the fetched interview details for debugging
-  const difficulty = result?.difficulty || "Difficulty"; // Use the fetched difficulty value or a default value
+  /**
+   * Start the interview.
+   *
+   * This effect waits until the interview details are available.
+   * It runs only once because of hasStarted.current.
+   */
+  useEffect(() => {
+    // Wait until interview details are loaded
+    if (!result) return;
+
+    // Prevent duplicate API calls
+    if (hasStarted.current) return;
+
+    hasStarted.current = true;
+
+    const generateFirstQuestion = async () => {
+      try {
+        const response = await fetch(
+          `${import.meta.env.VITE_BACKEND_URL}/api/interview/${id}/question`,
+          {
+            method: "POST",
+            credentials: "include",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(result),
+          },
+        );
+        const res = await response.json();
+        if (!res.success) {
+          throw new Error(res.message || "Failed to start interview");
+        }
+        setQuestion(res.data.question);
+        console.log("Start Interview Response:", res.data.question);
+      } catch (error) {
+        console.error("Error starting interview:", error);
+      }
+    };
+
+    generateFirstQuestion();
+  }, [result]);
+
+  // Show difficulty after data is loaded
+  const difficulty = result?.difficulty || "Difficulty";
+
   return (
     <div className="min-h-screen bg-zinc-50 transition-colors duration-300 dark:bg-zinc-950">
       <div className="mx-auto max-w-7xl px-4 py-24 sm:px-6 lg:px-8">
-        {/* Header */}
+        {/* Heading */}
         <div className="text-center">
           <h1 className="text-4xl font-bold text-zinc-900 dark:text-white">
             AI Mock Interview
@@ -51,9 +104,8 @@ const Interview = () => {
           </p>
         </div>
 
-        {/* Interview Information */}
+        {/* Interview Details */}
         <div className="mt-10 rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-          {/* Interview Info */}
           <div className="flex flex-col items-center justify-center gap-6 sm:flex-row sm:justify-between">
             {/* Job Role */}
             <div className="w-full sm:w-auto">
@@ -62,7 +114,7 @@ const Interview = () => {
               </label>
 
               <div className="rounded-xl border border-zinc-300 bg-zinc-50 px-5 py-3 font-semibold text-zinc-900 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white">
-               {result?.role || "Job Role"}
+                {result?.role || "Job Role"}
               </div>
             </div>
 
@@ -81,7 +133,7 @@ const Interview = () => {
                       : "bg-red-100 text-red-700 dark:bg-red-500/10 dark:text-red-400"
                 }`}
               >
-                {result?.difficulty || "Difficulty"}
+                {difficulty}
               </span>
             </div>
           </div>
@@ -98,18 +150,16 @@ const Interview = () => {
           </div>
         </div>
 
-        {/* Interview Panels */}
+        {/* AI & Camera Panels */}
         <div className="mt-8 grid gap-6 lg:grid-cols-2">
           <div className="overflow-hidden rounded-2xl border border-zinc-200 shadow-sm dark:border-zinc-800">
-            <AiPreview />
+            <AiPreview question={question} />
           </div>
 
           <div className="overflow-hidden rounded-2xl border border-zinc-200 shadow-sm dark:border-zinc-800">
             <CameraPreview />
           </div>
         </div>
-
-        {/* Bottom Controls */}
       </div>
     </div>
   );
