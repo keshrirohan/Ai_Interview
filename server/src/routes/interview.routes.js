@@ -7,6 +7,7 @@ import {
   startInterviewController,
 } from "../controller/interview.controller.js";
 import { prisma } from "../../lib/prisma.js";
+import { generateRole } from "../services/groq.service.js";
 
 const router = express.Router();
 
@@ -23,6 +24,10 @@ router.get("/:interviewId", authMiddleware, async (req, res) => {
       },
     });
 
+    const role = await generateRole(interview.jobDescription);
+
+    console.log("Generated role:", role);
+
     if (!interview) {
       return res.status(404).json({
         success: false,
@@ -32,7 +37,10 @@ router.get("/:interviewId", authMiddleware, async (req, res) => {
 
     return res.json({
       success: true,
-      data: interview,
+      data: {
+        ...interview,
+        role: role.role,
+      },
     });
   } catch (error) {
     console.error(error);
@@ -57,4 +65,3 @@ router.post(
 );
 
 export default router;
-    

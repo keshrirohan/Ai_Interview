@@ -4,6 +4,34 @@ const groqClient = new Groq({
   apiKey: process.env.GROQ_API_KEY,
 });
 
+export const generateRole = async (jobDescription) => {
+  const prompt = `
+You are a Senior Software Engineer Interviewer.
+Job Description:
+${jobDescription}
+Generate a suitable role for the job description.
+Return ONLY valid JSON.
+Return JSON:
+{
+  "role":"..."
+}
+`;
+
+  const response = await groqClient.chat.completions.create({
+    model: "llama-3.3-70b-versatile",
+    messages: [
+      {
+        role: "user",
+        content: prompt,
+      },
+    ],
+    response_format: {
+      type: "json_object",
+    },
+  });
+  return JSON.parse(response.choices[0].message.content);
+};
+
 // Generate First Question
 export const generateFirstQuestion = async (jobDescription, difficulty) => {
   const prompt = `

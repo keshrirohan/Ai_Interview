@@ -1,17 +1,17 @@
 import { useParams } from "react-router-dom";
-// import AiPreview from "../components/AiPreview";
-// import CameraPreview from "../components/CameraPreview";
-import { useEffect } from "react";
+import AiPreview from "../components/AiPreview";
+import CameraPreview from "../components/CameraPreview";
+import { useEffect, useState } from "react";
 
 const Interview = () => {
-  const difficulty = "hard"; // Replace with actual difficulty value
   const { id } = useParams(); // Get the interview ID from the URL
 
   console.log("Interview ID from URL:", id);
+  const [result, setResult] = useState(null);
 
   useEffect(() => {
     const fetchInterviewDetails = async () => {
-      // Log the interview ID for debugging
+      // Log the interview ID for debugging*
       try {
         const response = await fetch(
           `${import.meta.env.VITE_BACKEND_URL}/api/interview/${id}`,
@@ -19,14 +19,13 @@ const Interview = () => {
             credentials: "include", // Include credentials for cookie handling
           },
         );
-        const result = await response.json();
-        console.log("Fetched interview details:", result); // Log the fetched interview details for debugging
-        if (!result.success) {
-          throw new Error(
-            result.message || "Failed to fetch interview details",
-          );
+        const info = await response.json();
+        console.log("Fetched interview details:", info); // Log the fetched interview details for debugging
+        setResult(info.data); // Store the fetched interview details in state
+        if (!info.success) {
+          throw new Error(info.message || "Failed to fetch interview details");
         }
-        console.log("Interview details fetched successfully:", result.data); // Log the fetched interview details for debugging
+        console.log("Interview details fetched successfully:", info.data); // Log the fetched interview details for debugging
       } catch (error) {
         console.error("Error fetching interview details:", error);
       }
@@ -35,6 +34,8 @@ const Interview = () => {
     fetchInterviewDetails();
   }, [id]);
 
+  console.log("Fetched interview details:", result); // Log the fetched interview details for debugging
+  const difficulty = result?.difficulty || "Difficulty"; // Use the fetched difficulty value or a default value
   return (
     <div className="min-h-screen bg-zinc-50 transition-colors duration-300 dark:bg-zinc-950">
       <div className="mx-auto max-w-7xl px-4 py-24 sm:px-6 lg:px-8">
@@ -61,7 +62,7 @@ const Interview = () => {
               </label>
 
               <div className="rounded-xl border border-zinc-300 bg-zinc-50 px-5 py-3 font-semibold text-zinc-900 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white">
-                Frontend Developer
+               {result?.role || "Job Role"}
               </div>
             </div>
 
@@ -73,14 +74,14 @@ const Interview = () => {
 
               <span
                 className={`inline-flex rounded-full px-4 py-2 text-sm font-semibold ${
-                  difficulty === "Easy"
+                  difficulty === "EASY"
                     ? "bg-green-100 text-green-700 dark:bg-green-500/10 dark:text-green-400"
-                    : difficulty === "Medium"
+                    : difficulty === "MEDIUM"
                       ? "bg-yellow-100 text-yellow-700 dark:bg-yellow-500/10 dark:text-yellow-400"
                       : "bg-red-100 text-red-700 dark:bg-red-500/10 dark:text-red-400"
                 }`}
               >
-                hard
+                {result?.difficulty || "Difficulty"}
               </span>
             </div>
           </div>
@@ -100,11 +101,11 @@ const Interview = () => {
         {/* Interview Panels */}
         <div className="mt-8 grid gap-6 lg:grid-cols-2">
           <div className="overflow-hidden rounded-2xl border border-zinc-200 shadow-sm dark:border-zinc-800">
-            {/* <AiPreview /> */}
+            <AiPreview />
           </div>
 
           <div className="overflow-hidden rounded-2xl border border-zinc-200 shadow-sm dark:border-zinc-800">
-            {/* <CameraPreview /> */}
+            <CameraPreview />
           </div>
         </div>
 

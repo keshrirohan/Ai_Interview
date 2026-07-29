@@ -1,11 +1,12 @@
 import { Navigate, Outlet } from "react-router-dom";
 import { useAuth } from "./useContext";
+import LoadingScreen from "../components/LoadingScreen";
 
 const PrivateRoutes = () => {
   const { user, loading } = useAuth();
 
   if (loading) {
-    return <div>Loading...</div>;
+    return <LoadingScreen />; // Show loading screen while checking authentication status
   }
 
   if (!user) {
