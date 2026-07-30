@@ -76,8 +76,9 @@ const Interview = () => {
         if (!res.success) {
           throw new Error(res.message || "Failed to start interview");
         }
+        // if (res.currentQuestion == 1) return;
         setQuestion(res.data.question);
-        console.log("Start Interview Response:", res.data.question);
+        console.log("Start Interview Response:", res);
       } catch (error) {
         console.error("Error starting interview:", error);
       }

@@ -32,9 +32,10 @@ export const generateInterviewQuestion = async (req, res) => {
     console.log("Generating question for interviewId:", interviewId);
 
     const question = await getFirstQuestion(interviewId);
-    console.log("Generated question:", question);
+
     res.json({
       success: true,
+      currentQuestion: 1,
       data: question,
     });
   } catch (error) {

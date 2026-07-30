@@ -22,7 +22,6 @@ const AiPreview = ({ question }) => {
         <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-blue-600 dark:text-blue-400">
           Interview Question
         </p>
-
         <h2 className="text-center text-lg font-semibold leading-relaxed text-zinc-900 sm:text-xl md:text-2xl dark:text-zinc-100">
           {question}
         </h2>

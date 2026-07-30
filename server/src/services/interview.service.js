@@ -66,9 +66,25 @@ export const getFirstQuestion = async (interviewId) => {
       id: interviewId,
     },
   });
-  console.log("Found interview:", interview);
+
   if (!interview) {
     throw new Error("Interview not found");
+  }
+  console.log("the conversation is here", interview.conversation);
+
+  if (
+    interview.conversation &&
+    Array.isArray(interview.conversation) &&
+    interview.conversation.length > 0
+  ) {
+    return {
+      question:
+        interview.conversation[interview.conversation.length - 1].question,
+      expectedAnswer:
+        interview.conversation[interview.conversation.length - 1]
+          .expectedAnswer,
+      currentQuestion: interview.currentQuestion || 1,
+    };
   }
 
   // Generate first question
@@ -95,10 +111,15 @@ export const getFirstQuestion = async (interviewId) => {
     },
     data: {
       conversation,
+      currentQuestion: 1,
     },
   });
 
-  return aiResponse;
+  return {
+    question: aiResponse.question,
+    expectedAnswer: aiResponse.expectedAnswer,
+    currentQuestion: 1,
+  };
 };
 
 // Process Interview Answer
