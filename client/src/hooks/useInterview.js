@@ -28,15 +28,15 @@ const useInterview = (interviewId) => {
   } = useSpeechRecognition();
 
   // ─── Interview state ───────────────────────────────────────────────────────
-  const [interview, setInterview]             = useState(null);
-  const [question, setQuestion]               = useState("");
+  const [interview, setInterview] = useState(null);
+  const [question, setQuestion] = useState("");
   const [currentQuestion, setCurrentQuestion] = useState(1);
-  const [totalQuestions, setTotalQuestions]   = useState(10);
+  const [totalQuestions, setTotalQuestions] = useState(10);
 
   // ─── UI state ──────────────────────────────────────────────────────────────
-  const [loading, setLoading]       = useState(true);
+  const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
-  const [error, setError]           = useState(null);
+  const [error, setError] = useState(null);
 
   // ─── Guards ────────────────────────────────────────────────────────────────
   // Prevents double-call to /question in React Strict Mode
@@ -76,7 +76,7 @@ const useInterview = (interviewId) => {
         if (err.name === "AbortError") return; // component unmounted — ignore
         console.error("[useInterview] fetchInterview:", err);
         setError(err.message);
-        setLoading(false);           // ensure spinner stops on error
+        setLoading(false); // ensure spinner stops on error
       }
       // NOTE: setLoading(false) for the success path is handled in initQuestion's
       // finally block, so loading stays true until the first question is ready.
@@ -148,8 +148,17 @@ const useInterview = (interviewId) => {
    * stays stable and doesn't cause the effect to re-register on every keystroke.
    */
   const transcriptRef = useRef(transcript);
-  useEffect(() => { transcriptRef.current = transcript; }, [transcript]);
-
+  useEffect(() => {
+    transcriptRef.current = transcript;
+  }, [transcript]);
+  // ─── 5. End interview ──────────────────────────────────────────────────────
+  const endInterview = useCallback(() => {
+    stopListening();
+    cancelSpeak();
+    // Navigate to the new-interview dashboard.
+    // TODO: change to `/report/${interviewId}` once the Report page exists.
+    navigate("/interview");
+  }, [navigate]); // eslint-disable-line react-hooks/exhaustive-deps
   const processCurrentAnswer = useCallback(async () => {
     if (processing) return;
 
@@ -192,15 +201,6 @@ const useInterview = (interviewId) => {
       setProcessing(false);
     }
   }, [processing, interviewId]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // ─── 5. End interview ──────────────────────────────────────────────────────
-  const endInterview = useCallback(() => {
-    stopListening();
-    cancelSpeak();
-    // Navigate to the new-interview dashboard.
-    // TODO: change to `/report/${interviewId}` once the Report page exists.
-    navigate("/interview");
-  }, [navigate]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ─── 6. Cleanup on unmount ─────────────────────────────────────────────────
   useEffect(() => {

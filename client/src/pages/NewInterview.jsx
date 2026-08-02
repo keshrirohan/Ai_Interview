@@ -48,6 +48,7 @@ const NewInterview = () => {
 
       navigate(`/interview/${result.data.id}`);
     } catch (error) {
+      errorToast(error.message || "An unexpected error occurred.");
       errorToast("Something went wrong. Please try again.");
     }
   };
