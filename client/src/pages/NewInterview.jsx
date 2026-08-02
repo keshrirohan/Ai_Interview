@@ -1,6 +1,7 @@
 import { useState } from "react";
-import JDs from "../components/JDs";
 import { useNavigate } from "react-router-dom";
+import JDs from "../components/JDs";
+import { errorToast } from "../utils/toast";
 
 const NewInterview = () => {
   const navigate = useNavigate();
@@ -10,36 +11,44 @@ const NewInterview = () => {
     difficulty: "MEDIUM",
   });
 
-  const handleonchange = (e) => {
-    setInvdata({
-      ...invdata,
-      [e.target.name]: e.target.value,
-    });
+  const handleChange = (e) => {
+    setInvdata({ ...invdata, [e.target.name]: e.target.value });
+  };
+
+  // Clear the form back to its initial state
+  const handleClear = () => {
+    setInvdata({ jobDescription: "", difficulty: "MEDIUM" });
   };
 
   const handleGenerateInterview = async (e) => {
     e.preventDefault();
-    const url = `${import.meta.env.VITE_BACKEND_URL}/api/interview/start`;
+
+    if (!invdata.jobDescription.trim()) {
+      errorToast("Please paste a job description before generating.");
+      return;
+    }
+
     try {
-      const response = await fetch(url, {
-        method: "POST",
-        credentials: "include",
-        headers: {
-          "Content-Type": "application/json",
+      const response = await fetch(
+        `${import.meta.env.VITE_BACKEND_URL}/api/interview/start`,
+        {
+          method: "POST",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(invdata),
         },
-        body: JSON.stringify(invdata),
-      });
+      );
+
       const result = await response.json();
-      console.log("Generate Interview response:", result);
+
       if (!result.success) {
-        throw new Error(result.message || "Failed to generate interview");
+        errorToast(result.message || "Failed to generate interview.");
+        return;
       }
-      console.log("Generate Interview response:", result.data);
-      console.log("Before navigate");
-      console.log("Navigating url:", `/interview/${result.data.id}`);
+
       navigate(`/interview/${result.data.id}`);
     } catch (error) {
-      console.error("Error during interview generation:", error.message);
+      errorToast("Something went wrong. Please try again.");
     }
   };
 
@@ -63,14 +72,13 @@ const NewInterview = () => {
             <label className="mb-2 block font-medium text-zinc-800 dark:text-zinc-200">
               Job Description
             </label>
-
             <textarea
               rows={10}
               placeholder="Paste the complete job description here..."
               className="w-full resize-none rounded-xl border border-zinc-300 bg-white p-4 text-zinc-900 outline-none transition focus:border-blue-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white"
               name="jobDescription"
               value={invdata.jobDescription}
-              onChange={handleonchange}
+              onChange={handleChange}
             />
           </div>
 
@@ -79,35 +87,40 @@ const NewInterview = () => {
             <label className="mb-2 block font-medium text-zinc-800 dark:text-zinc-200">
               Upload Job Description
             </label>
-
             <input
               type="file"
+              accept=".pdf,.doc,.docx,.txt"
               className="block w-full rounded-lg border border-zinc-300 bg-zinc-50 p-3 text-sm file:mr-4 file:rounded-lg file:border-0 file:bg-blue-600 file:px-4 file:py-2 file:text-white hover:file:bg-blue-700 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300"
             />
           </div>
 
+          {/* Difficulty */}
           <select
             required
             className="mb-6 block w-full rounded-lg border border-zinc-300 bg-zinc-50 p-3 text-sm text-zinc-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300"
             name="difficulty"
             value={invdata.difficulty}
-            onChange={handleonchange}
+            onChange={handleChange}
           >
             <option value="EASY">Easy</option>
             <option value="MEDIUM">Medium</option>
             <option value="HARD">Hard</option>
           </select>
 
-          {/* Buttons */}
+          {/* Actions */}
           <div className="flex flex-col gap-4 sm:flex-row">
             <button
-              className="rounded-xl bg-blue-600 px-6 py-3 font-medium text-white transition hover:bg-blue-700"
               onClick={handleGenerateInterview}
+              className="rounded-xl bg-blue-600 px-6 py-3 font-medium text-white transition hover:bg-blue-700"
             >
               Generate Interview
             </button>
 
-            <button className="rounded-xl border border-zinc-300 px-6 py-3 font-medium text-zinc-700 transition hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800">
+            <button
+              onClick={handleClear}
+              type="button"
+              className="rounded-xl border border-zinc-300 px-6 py-3 font-medium text-zinc-700 transition hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+            >
               Clear
             </button>
           </div>

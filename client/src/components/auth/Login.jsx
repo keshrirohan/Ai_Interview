@@ -3,68 +3,54 @@ import { useAuth } from "../../utils/useContext";
 import { errorToast, successToast } from "../../utils/toast";
 
 const Login = ({ openSignup, openForgot, closeModal }) => {
-  const { login } = useAuth(); // Get the login function from the context
-  // ==========================
-  // Form State
-  // ==========================
-  const [formData, setFormData] = useState({
-    email: "",
-    password: "",
-  });
+  const { login } = useAuth();
 
-  // ==========================
-  // Handle Input Change
-  // ==========================
+  const [formData, setFormData] = useState({ email: "", password: "" });
+
   const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
+    setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  // ==========================
-  // Handle Form Submit
-  // ==========================
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    // Use the toast system — not alert() — for consistency
     if (!formData.email || !formData.password) {
-      alert("Please fill in both email and password fields.");
+      errorToast("Please fill in both email and password.");
       return;
     }
+
     try {
-      const url = `${import.meta.env.VITE_BACKEND_URL}/api/auth/login`;
-      console.log("Login URL:", url);
-      const response = await fetch(url, {
-        method: "POST",
-        credentials: "include", // Include credentials for cookie handling
-        headers: {
-          "Content-Type": "application/json",
+      const response = await fetch(
+        `${import.meta.env.VITE_BACKEND_URL}/api/auth/login`,
+        {
+          method: "POST",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(formData),
         },
-        body: JSON.stringify(formData),
-      });
+      );
 
       const data = await response.json();
-      console.log("Login response:", data);
-      login(data.user); // Update the user state in the context
 
-      closeModal();
-      successToast("Login successful!"); // Show success toast
+      // Check success BEFORE updating context or showing a success toast
       if (!data.success) {
-        errorToast(data.message); // Show error toast
-        throw new Error(data.message || "Login failed");
+        errorToast(data.message || "Login failed. Please try again.");
+        return;
       }
+
+      login(data.user);
+      successToast("Login successful!");
+      closeModal();
     } catch (error) {
-      console.error("Error during login:", error);
+      console.error("[Login] error:", error);
+      errorToast("Something went wrong. Please try again.");
     }
   };
 
   return (
     <div className="w-full max-w-md rounded-2xl border border-zinc-200 bg-white p-6 shadow-2xl dark:border-zinc-800 dark:bg-zinc-900 sm:p-8">
-      {/* ==========================
-          Heading
-      ========================== */}
-
+      {/* Heading */}
       <h1 className="text-center text-3xl font-bold text-zinc-900 dark:text-white sm:text-4xl">
         Welcome Back 👋
       </h1>
@@ -73,13 +59,9 @@ const Login = ({ openSignup, openForgot, closeModal }) => {
         Login to continue your AI interview preparation journey.
       </p>
 
-      {/* ==========================
-          Login Form
-      ========================== */}
-
+      {/* Form */}
       <form onSubmit={handleSubmit} className="mt-8 space-y-5">
         {/* Email */}
-
         <div>
           <label
             htmlFor="email"
@@ -87,7 +69,6 @@ const Login = ({ openSignup, openForgot, closeModal }) => {
           >
             Email
           </label>
-
           <input
             id="email"
             name="email"
@@ -101,7 +82,6 @@ const Login = ({ openSignup, openForgot, closeModal }) => {
         </div>
 
         {/* Password */}
-
         <div>
           <div className="mb-2 flex items-center justify-between">
             <label
@@ -110,16 +90,14 @@ const Login = ({ openSignup, openForgot, closeModal }) => {
             >
               Password
             </label>
-
             <button
               type="button"
               onClick={openForgot}
               className="text-sm text-blue-600 transition hover:text-blue-700"
             >
-              Forgot Password?
+              Forgot password?
             </button>
           </div>
-
           <input
             id="password"
             name="password"
@@ -132,8 +110,6 @@ const Login = ({ openSignup, openForgot, closeModal }) => {
           />
         </div>
 
-        {/* Login Button */}
-
         <button
           type="submit"
           className="w-full rounded-lg bg-blue-600 py-3 text-sm font-semibold text-white transition-all duration-300 hover:bg-blue-700 active:scale-95"
@@ -143,27 +119,19 @@ const Login = ({ openSignup, openForgot, closeModal }) => {
       </form>
 
       {/* Divider */}
-
       <div className="my-6 flex items-center">
-        <div className="h-px flex-1 bg-zinc-300 dark:bg-zinc-700"></div>
-
-        <span className="mx-4 text-sm text-zinc-500 dark:text-zinc-400">
-          OR
-        </span>
-
-        <div className="h-px flex-1 bg-zinc-300 dark:bg-zinc-700"></div>
+        <div className="h-px flex-1 bg-zinc-300 dark:bg-zinc-700" />
+        <span className="mx-4 text-sm text-zinc-500 dark:text-zinc-400">OR</span>
+        <div className="h-px flex-1 bg-zinc-300 dark:bg-zinc-700" />
       </div>
 
-      {/* Google Login */}
-
+      {/* Google login placeholder */}
       <button
         type="button"
         className="w-full rounded-lg border border-zinc-300 bg-white py-3 text-sm font-medium text-zinc-800 transition-all duration-300 hover:bg-zinc-100 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white dark:hover:bg-zinc-700"
       >
         Continue with Google
       </button>
-
-      {/* Signup Link */}
 
       <p className="mt-6 text-center text-sm text-zinc-600 dark:text-zinc-400">
         Don't have an account?{" "}
@@ -172,7 +140,7 @@ const Login = ({ openSignup, openForgot, closeModal }) => {
           onClick={openSignup}
           className="font-semibold text-blue-600 transition hover:text-blue-700"
         >
-          Create Account
+          Sign up
         </button>
       </p>
     </div>

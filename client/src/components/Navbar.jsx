@@ -1,4 +1,5 @@
 import { useRef, useState } from "react";
+import { Link } from "react-router-dom";
 import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
 import { Menu, User, X } from "lucide-react";
@@ -11,31 +12,21 @@ import { useAuth } from "../utils/useContext";
 
 gsap.registerPlugin(useGSAP);
 
+const NAV_LINKS = [
+  { label: "Home",      to: "/"         },
+  { label: "Interview", to: "/interview" },
+  { label: "Contact",   to: "/contact"  },
+];
+
 const Navbar = () => {
-  // =========================
-  // States
-  // =========================
+  const [open, setOpen]           = useState(false);
+  const [authModal, setAuthModal] = useState(null); // "login" | "signup" | "forgot" | null
+  const { user, logout }          = useAuth();
+  const mobileRef                 = useRef();
 
-  const [open, setOpen] = useState(false);
-  const { user, logout } = useAuth();
-
-  // login | signup | null
-  const [authModal, setAuthModal] = useState(null);
-
-  // =========================
-  // Refs
-  // =========================
-
-  const mobileRef = useRef();
-
-  // =========================
-  // Mobile Menu Animation
-  // =========================
-
+  // ─── Mobile menu slide animation ──────────────────────────────────────────
   useGSAP(() => {
-    gsap.set(mobileRef.current, {
-      x: "-100%",
-    });
+    gsap.set(mobileRef.current, { x: "-100%" });
   });
 
   useGSAP(() => {
@@ -46,70 +37,57 @@ const Navbar = () => {
     });
   }, [open]);
 
-  // =========================
-  // Navbar Links
-  // =========================
-
-  const links = ["Home", "Interview", "Contact"];
-
+  // ─── Logout ───────────────────────────────────────────────────────────────
   const handleLogout = async () => {
     try {
-      const response = await fetch(
+      const res = await fetch(
         `${import.meta.env.VITE_BACKEND_URL}/api/auth/logout`,
-        {
-          method: "POST",
-          credentials: "include", // Include cookies in the request
-        },
+        { method: "POST", credentials: "include" },
       );
-
-      if (!response.ok) {
-        throw new Error("Logout failed");
-      }
-      logout(); // Update the context to reflect the user is logged out
+      if (!res.ok) throw new Error("Logout failed");
+      logout();
     } catch (error) {
-      console.error("Logout failed:", error);
+      console.error("[Navbar] logout error:", error);
     }
   };
+
+  const closeMenu = () => setOpen(false);
 
   return (
     <>
       <nav className="fixed top-0 left-0 z-50 w-full border-b border-zinc-200 bg-white/70 backdrop-blur-xl dark:border-zinc-800 dark:bg-zinc-950/70">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
+
           {/* Logo */}
+          <Link to="/" className="text-2xl font-bold text-zinc-900 dark:text-white">
+            EchoHire<span className="text-blue-500">AI</span>
+          </Link>
 
-          <h1 className="text-2xl font-bold text-zinc-900 dark:text-white">
-            EchoHire
-            <span className="text-blue-500">AI</span>
-          </h1>
-
-          {/* Desktop Menu */}
-
+          {/* Desktop nav links — key on <Link>, not inner <li> */}
           <ul className="hidden gap-8 md:flex">
-            {links.map((item) => (
-              <a href={`/${item.toLowerCase()}`}>
-                {" "}
-                <li
-                  key={item}
+            {NAV_LINKS.map(({ label, to }) => (
+              <li key={label}>
+                <Link
+                  to={to}
                   className="cursor-pointer text-zinc-700 transition hover:text-blue-500 dark:text-zinc-300"
                 >
-                  {item}
-                </li>
-              </a>
+                  {label}
+                </Link>
+              </li>
             ))}
           </ul>
 
-          {/* Desktop Buttons */}
-
+          {/* Desktop auth controls */}
           <div className="hidden items-center gap-4 md:flex">
             <ThemeToggle />
             {user ? (
               <>
-                <button className="p-2 rounded-lg bg-zinc-200 dark:bg-zinc-800 text-zinc-900 dark:text-white transition hover:scale-110">
+                <button className="rounded-lg bg-zinc-200 p-2 text-zinc-900 transition hover:scale-110 dark:bg-zinc-800 dark:text-white">
                   <User size={18} />
                 </button>
                 <button
                   onClick={handleLogout}
-                  className="rounded-xl bg-blue-600 px-6 py-3 text-white"
+                  className="rounded-xl bg-blue-600 px-6 py-3 text-white transition hover:bg-blue-700"
                 >
                   Logout
                 </button>
@@ -122,7 +100,6 @@ const Navbar = () => {
                 >
                   Login
                 </button>
-
                 <button
                   onClick={() => setAuthModal("signup")}
                   className="rounded-xl bg-blue-600 px-5 py-2 text-white transition hover:bg-blue-700"
@@ -133,107 +110,98 @@ const Navbar = () => {
             )}
           </div>
 
-          {/* Mobile */}
-
+          {/* Mobile hamburger */}
           <div className="flex items-center gap-3 md:hidden">
             <ThemeToggle />
-            {user ? (
-              <button className="p-2 rounded-lg bg-zinc-200 dark:bg-zinc-800 text-zinc-900 dark:text-white transition hover:scale-110">
+            {user && (
+              <button className="rounded-lg bg-zinc-200 p-2 text-zinc-900 dark:bg-zinc-800 dark:text-white">
                 <User size={18} />
               </button>
-            ) : null}
-            <button onClick={() => setOpen(!open)}>
-              {open ? (
-                <X className="text-zinc-900 dark:text-white" />
-              ) : (
-                <Menu className="text-zinc-900 dark:text-white" />
-              )}
+            )}
+            <button onClick={() => setOpen((o) => !o)} aria-label="Toggle menu">
+              {open
+                ? <X className="text-zinc-900 dark:text-white" />
+                : <Menu className="text-zinc-900 dark:text-white" />}
             </button>
           </div>
         </div>
 
-        {/* Mobile Menu */}
-
+        {/* Mobile menu — links now use <Link> so they actually navigate */}
         <div
           ref={mobileRef}
           className="absolute left-0 top-full h-screen w-full border-t border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900 md:hidden"
         >
           <ul className="flex h-full flex-col items-center justify-center gap-8">
-            {links.map((item) => (
-              <li
-                key={item}
-                onClick={() => setOpen(false)}
-                className="cursor-pointer text-lg text-zinc-700 transition hover:text-blue-500 dark:text-zinc-300"
-              >
-                {item}
+            {NAV_LINKS.map(({ label, to }) => (
+              <li key={label}>
+                <Link
+                  to={to}
+                  onClick={closeMenu}
+                  className="text-lg text-zinc-700 transition hover:text-blue-500 dark:text-zinc-300"
+                >
+                  {label}
+                </Link>
               </li>
             ))}
 
             {user ? (
-              <button
-                onClick={handleLogout}
-                className="rounded-xl bg-blue-600 px-6 py-3 text-white"
-              >
-                Logout
-              </button>
+              <li>
+                <button
+                  onClick={() => { handleLogout(); closeMenu(); }}
+                  className="rounded-xl bg-blue-600 px-6 py-3 text-white transition hover:bg-blue-700"
+                >
+                  Logout
+                </button>
+              </li>
             ) : (
               <>
-                <button
-                  onClick={() => {
-                    setAuthModal("login");
-                    setOpen(false);
-                  }}
-                  className="font-medium text-zinc-700 dark:text-zinc-300"
-                >
-                  Login
-                </button>
-
-                <button
-                  onClick={() => {
-                    setAuthModal("signup");
-                    setOpen(false);
-                  }}
-                  className="rounded-xl bg-blue-600 px-6 py-3 text-white"
-                >
-                  Get Started
-                </button>
+                <li>
+                  <button
+                    onClick={() => { setAuthModal("login"); closeMenu(); }}
+                    className="font-medium text-zinc-700 dark:text-zinc-300"
+                  >
+                    Login
+                  </button>
+                </li>
+                <li>
+                  <button
+                    onClick={() => { setAuthModal("signup"); closeMenu(); }}
+                    className="rounded-xl bg-blue-600 px-6 py-3 text-white transition hover:bg-blue-700"
+                  >
+                    Get Started
+                  </button>
+                </li>
               </>
             )}
           </ul>
         </div>
       </nav>
 
-      {/* =========================
-          Authentication Modal
-      ========================= */}
-
+      {/* Auth modal */}
       {authModal && (
-        <div className="fixed inset-0 z-[100] overflow-y-auto bg-black/50 backdrop-blur-md ">
+        <div className="fixed inset-0 z-[100] overflow-y-auto bg-black/50 backdrop-blur-md">
           <div className="flex min-h-screen items-center justify-center p-4 sm:p-6">
-            {/* Close Button */}
-
             <button
               onClick={() => setAuthModal(null)}
               className="fixed right-4 top-4 z-50 rounded-lg p-2 text-white transition hover:bg-white/10 sm:right-6 sm:top-6"
+              aria-label="Close modal"
             >
               <X size={24} />
             </button>
 
-            {authModal === "login" && (
+            {authModal === "login"  && (
               <Login
                 openSignup={() => setAuthModal("signup")}
                 openForgot={() => setAuthModal("forgot")}
                 closeModal={() => setAuthModal(null)}
               />
             )}
-
             {authModal === "signup" && (
               <Signup
                 openLogin={() => setAuthModal("login")}
                 closeModal={() => setAuthModal(null)}
               />
             )}
-
             {authModal === "forgot" && (
               <ForgetPassword openLogin={() => setAuthModal("login")} />
             )}

@@ -5,95 +5,69 @@ import {
   generateFirstQuestion,
   processAnswer,
 } from "./groq.service.js";
-// Start Interview Service
+
+// ─── Start Interview ──────────────────────────────────────────────────────────
 export const startInterview = async (userId, data) => {
   const { jobDescription, difficulty } = data;
 
-  try {
-    // Check interview limit
-    const user = await prisma.user.findUnique({
-      where: {
-        id: userId,
-      },
-    });
-    const limit = PLAN_LIMITS[user.plan];
+  // 1. Fetch user and check plan limit in one query
+  const user = await prisma.user.findUnique({ where: { id: userId } });
 
-    if (user.interviewsUsed >= limit) {
-      throw new Error(
-        "Interview limit reached. Please upgrade your subscription.",
-      );
-    }
-
-    if (user.interviewsUsed >= limit) {
-      throw new Error(
-        `Interview limit reached. Your ${user.plan} plan allows only ${limit} interviews. Please upgrade your subscription.`,
-      );
-    }
-
-    // Create Interview Session
-    const interview = await prisma.interview.create({
-      data: {
-        userId,
-        jobDescription,
-        difficulty,
-      },
-    });
-
-    await prisma.user.update({
-      where: {
-        id: userId,
-      },
-      data: {
-        interviewsUsed: {
-          increment: 1,
-        },
-      },
-    });
-
-    return interview;
-  } catch (error) {
-    console.error("Error starting interview:", error);
-    throw new Error("Failed to start interview.");
+  if (!user) {
+    throw new Error("User not found.");
   }
 
-  return;
+  const limit = PLAN_LIMITS[user.plan];
+
+  // Single limit check (duplicate block removed)
+  if (user.interviewsUsed >= limit) {
+    throw new Error(
+      `Interview limit reached. Your ${user.plan} plan allows ${limit} interview${limit === 1 ? "" : "s"}. Please upgrade your subscription.`,
+    );
+  }
+
+  // 2. Create interview and increment counter in a transaction so they are atomic
+  const [interview] = await prisma.$transaction([
+    prisma.interview.create({
+      data: { userId, jobDescription, difficulty },
+    }),
+    prisma.user.update({
+      where: { id: userId },
+      data: { interviewsUsed: { increment: 1 } },
+    }),
+  ]);
+
+  return interview;
 };
 
+// ─── Get / Generate First Question ───────────────────────────────────────────
 export const getFirstQuestion = async (interviewId) => {
-  // Find interview
   const interview = await prisma.interview.findUnique({
-    where: {
-      id: interviewId,
-    },
+    where: { id: interviewId },
   });
 
   if (!interview) {
-    throw new Error("Interview not found");
+    throw new Error("Interview not found.");
   }
-  console.log("the conversation is here", interview.conversation);
 
-  if (
-    interview.conversation &&
-    Array.isArray(interview.conversation) &&
-    interview.conversation.length > 0
-  ) {
+  // Resume: if a conversation already exists return the last saved question
+  const convo = interview.conversation;
+
+  if (Array.isArray(convo) && convo.length > 0) {
+    const last = convo[convo.length - 1];
     return {
-      question:
-        interview.conversation[interview.conversation.length - 1].question,
-      expectedAnswer:
-        interview.conversation[interview.conversation.length - 1]
-          .expectedAnswer,
+      question: last.question,
+      expectedAnswer: last.expectedAnswer,
       currentQuestion: interview.currentQuestion || 1,
     };
   }
 
-  // Generate first question
+  // First run: generate via AI
   const aiResponse = await generateFirstQuestion(
     interview.jobDescription,
     interview.difficulty,
   );
 
-  // Create conversation
   const conversation = [
     {
       question: aiResponse.question,
@@ -104,15 +78,9 @@ export const getFirstQuestion = async (interviewId) => {
     },
   ];
 
-  // Save conversation
   await prisma.interview.update({
-    where: {
-      id: interviewId,
-    },
-    data: {
-      conversation,
-      currentQuestion: 1,
-    },
+    where: { id: interviewId },
+    data: { conversation, currentQuestion: 1 },
   });
 
   return {
@@ -122,121 +90,95 @@ export const getFirstQuestion = async (interviewId) => {
   };
 };
 
-// Process Interview Answer
+// ─── Process Interview Answer ─────────────────────────────────────────────────
 export const processInterview = async (interviewId, answer) => {
-  // 1. Find interview
   const interview = await prisma.interview.findUnique({
-    where: {
-      id: interviewId,
-    },
+    where: { id: interviewId },
   });
 
-  // Check interview exists
   if (!interview) {
     throw new Error("Interview not found.");
   }
 
-  // 2. Get previous conversation
   let conversation = interview.conversation || [];
 
-  // Check if interview has started
   if (conversation.length === 0) {
-    throw new Error("No interview question found.");
+    throw new Error("No interview question found. Start the interview first.");
   }
 
-  // 3. Get last question
+  // Save the candidate's answer on the last question slot
   const lastIndex = conversation.length - 1;
-
-  // 4. Save user's answer
   conversation[lastIndex].answer = answer;
 
-  // 5. Send conversation to Groq
+  // Evaluate and get next question from AI
   const aiResponse = await processAnswer(
     interview.jobDescription,
     interview.difficulty,
     conversation,
   );
 
-  // 6. Update score & feedback
-  conversation[lastIndex].score = aiResponse.score;
+  conversation[lastIndex].score    = aiResponse.score;
   conversation[lastIndex].feedback = aiResponse.feedback;
 
+  // ── Interview complete ────────────────────────────────────────────────────
   if (conversation.length >= interview.maxQuestions) {
-    // Generate Final Report
     const report = await generateFinalReport(
       interview.jobDescription,
       interview.difficulty,
       conversation,
     );
 
-    // Save Report
-    await prisma.report.create({
-      data: {
-        interviewId,
+    // Save report and mark interview completed in one transaction
+    const [newReport] = await prisma.$transaction([
+      prisma.report.create({
+        data: {
+          interviewId,
+          score:           report.score,
+          communication:   report.communication,
+          technical:       report.technical,
+          confidence:      report.confidence,
+          problemSolving:  report.problemSolving,
+          strengths:       report.strengths,
+          weaknesses:      report.weaknesses,
+          recommendations: report.recommendations,
+          summary:         report.summary,
+        },
+      }),
+      prisma.interview.update({
+        where: { id: interviewId },
+        data: {
+          conversation,
+          status:      "COMPLETED",
+          completedAt: new Date(),
+        },
+      }),
+    ]);
 
-        score: report.score,
-
-        communication: report.communication,
-
-        technical: report.technical,
-
-        confidence: report.confidence,
-
-        problemSolving: report.problemSolving,
-
-        strengths: report.strengths,
-
-        weaknesses: report.weaknesses,
-
-        recommendations: report.recommendations,
-
-        summary: report.summary,
-      },
-    });
-
-    await prisma.interview.update({
-      where: {
-        id: interviewId,
-      },
-      data: {
-        conversation,
-        status: "COMPLETED",
-        completedAt: new Date(),
-      },
-    });
-
-    return {
-      completed: true,
-      report,
-    };
+    return { completed: true, report };
   }
 
-  // 7. Add next question
+  // ── More questions remain ─────────────────────────────────────────────────
   conversation.push({
-    question: aiResponse.nextQuestion,
+    question:       aiResponse.nextQuestion,
     expectedAnswer: aiResponse.expectedAnswer,
-    answer: null,
-    score: null,
-    feedback: null,
+    answer:         null,
+    score:          null,
+    feedback:       null,
   });
 
-  // Save Conversation
+  // Increment currentQuestion counter so resume always lands on the right slot
+  const nextCount = interview.currentQuestion + 1;
+
   await prisma.interview.update({
-    where: {
-      id: interviewId,
-    },
-    data: {
-      conversation,
-    },
+    where: { id: interviewId },
+    data: { conversation, currentQuestion: nextCount },
   });
 
   return {
-    completed: false,
-
-    score: aiResponse.score,
-
-    feedback: aiResponse.feedback,
-
+    completed:    false,
+    score:        aiResponse.score,
+    feedback:     aiResponse.feedback,
     nextQuestion: aiResponse.nextQuestion,
+    currentQuestion: nextCount,
   };
 };

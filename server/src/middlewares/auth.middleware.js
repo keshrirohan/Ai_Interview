@@ -1,29 +1,29 @@
 import jwt from "jsonwebtoken";
 
-// Protect Private Routes
+/**
+ * authMiddleware
+ *
+ * Verifies the JWT from the httpOnly cookie (or Authorization header as
+ * a fallback for non-browser clients).  Attaches the decoded payload to
+ * req.user and calls next(), or returns 401.
+ */
 const authMiddleware = (req, res, next) => {
   try {
-    // Get token from request header
-    const token = req.cookies.token || req.headers.authorization?.split(" ")[1];
+    const token =
+      req.cookies.token || req.headers.authorization?.split(" ")[1];
 
-    // Check if token exists
     if (!token) {
       return res.status(401).json({
         success: false,
-        message: "Access denied. Please login.",
+        message: "Access denied. Please log in.",
       });
     }
 
-    // Verify JWT token
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    // Verify and attach — no console.log so sensitive payloads never leak
+    req.user = jwt.verify(token, process.env.JWT_SECRET);
 
-    console.log("Decoded JWT:", decoded); // Log the decoded token for debugging
-    // Save user data in request
-    req.user = decoded;
-
-    // Go to next middleware/controller
     next();
-  } catch (error) {
+  } catch {
     return res.status(401).json({
       success: false,
       message: "Invalid or expired token.",

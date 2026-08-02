@@ -5,77 +5,82 @@ import { createSpeechRecognition } from "../utils/speechToText";
  * useSpeechRecognition
  *
  * Responsible ONLY for microphone access and building a running transcript.
- * It does NOT know anything about the interview flow.
  *
- * Exposes:
- *   transcript    – accumulated text from the current listening session
- *   isListening   – true while the recognition engine is active
- *   startListening  – starts recognition (no-op if already active)
- *   stopListening   – stops recognition  (no-op if already idle)
- *   resetTranscript – clears the accumulated transcript
+ * Key design decisions:
+ *   - isListeningRef mirrors the isListening state so startListening /
+ *     stopListening guards never read stale closure values.
+ *   - transcript is also mirrored in a ref so callers can snapshot it
+ *     synchronously without adding it to useCallback dep arrays.
  */
 const useSpeechRecognition = () => {
-  const recognitionRef = useRef(null);
+  const recognitionRef   = useRef(null);
+  const isListeningRef   = useRef(false);   // ref mirror — always current value
 
   const [transcript, setTranscript] = useState("");
   const [isListening, setIsListening] = useState(false);
 
-  // ─── Setup ──────────────────────────────────────────────────────────────────
+  // Keep the ref in sync with the state
+  const setListening = (val) => {
+    isListeningRef.current = val;
+    setIsListening(val);
+  };
+
+  // ─── Setup ─────────────────────────────────────────────────────────────────
   useEffect(() => {
     recognitionRef.current = createSpeechRecognition();
-
     const recognition = recognitionRef.current;
 
-    recognition.onstart = () => setIsListening(true);
+    recognition.onstart = () => setListening(true);
 
-    recognition.onend = () => setIsListening(false);
+    recognition.onend = () => setListening(false);
 
-    /**
-     * Accumulate results across all segments that have arrived since the last
-     * event (event.resultIndex … event.results.length).
-     * We append to state so that every continuous utterance is captured in full.
-     */
+    // Accumulate — append new segments rather than overwriting
     recognition.onresult = (event) => {
       let newText = "";
-
       for (let i = event.resultIndex; i < event.results.length; i++) {
         newText += event.results[i][0].transcript;
       }
-
       setTranscript((prev) => prev + newText);
     };
 
     recognition.onerror = (event) => {
-      console.error("[SpeechRecognition] error:", event.error);
-      setIsListening(false);
+      // "no-speech" is expected when the user is silent — not a real error
+      if (event.error !== "no-speech") {
+        console.error("[SpeechRecognition] error:", event.error);
+      }
+      setListening(false);
     };
 
-    // Cleanup: stop recognition when the consuming component unmounts
     return () => {
-      recognition.onstart = null;
-      recognition.onend = null;
+      recognition.onstart  = null;
+      recognition.onend    = null;
       recognition.onresult = null;
-      recognition.onerror = null;
+      recognition.onerror  = null;
       recognition.abort();
     };
   }, []);
 
-  // ─── Controls ───────────────────────────────────────────────────────────────
+  // ─── Controls ──────────────────────────────────────────────────────────────
 
-  /** Start recognition. No-op if already active to prevent InvalidStateError. */
+  /**
+   * Start recognition.
+   * Uses isListeningRef (not state) so the guard is never stale.
+   */
   const startListening = () => {
-    if (isListening) return;
-    setTranscript(""); // fresh transcript for each new listening session
+    if (isListeningRef.current) return;
+    setTranscript("");           // fresh transcript for each new answer
     recognitionRef.current?.start();
   };
 
-  /** Stop recognition. No-op if already idle. */
+  /**
+   * Stop recognition.
+   * Uses isListeningRef so rapid calls can't cause InvalidStateError.
+   */
   const stopListening = () => {
-    if (!isListening) return;
+    if (!isListeningRef.current) return;
     recognitionRef.current?.stop();
   };
 
-  /** Manually wipe the accumulated transcript (e.g. after submitting an answer). */
   const resetTranscript = () => setTranscript("");
 
   return {

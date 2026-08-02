@@ -2,17 +2,20 @@ import { useEffect, useState } from "react";
 import { AuthContext } from "./useContext";
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
+  const [user, setUser]       = useState(null);
   const [loading, setLoading] = useState(true);
 
+  // ─── Restore session on mount ──────────────────────────────────────────────
   useEffect(() => {
+    // AbortController prevents a state update on an unmounted component
+    // when the user navigates away before the /me request resolves.
+    const controller = new AbortController();
+
     const checkAuth = async () => {
       try {
         const res = await fetch(
           `${import.meta.env.VITE_BACKEND_URL}/api/auth/me`,
-          {
-            credentials: "include",
-          },
+          { credentials: "include", signal: controller.signal },
         );
 
         const data = await res.json();
@@ -20,23 +23,22 @@ export const AuthProvider = ({ children }) => {
         if (data.success) {
           setUser(data.user);
         }
-      } catch (error) {
-        console.log(error);
+      } catch (err) {
+        if (err.name === "AbortError") return; // unmounted — ignore
+        // Any other error means unauthenticated; user stays null
       } finally {
         setLoading(false);
       }
     };
 
     checkAuth();
+
+    return () => controller.abort();
   }, []);
 
-  const login = (userData) => {
-    setUser(userData);
-  };
-
-  const logout = () => {
-    setUser(null);
-  };
+  // ─── Auth actions ──────────────────────────────────────────────────────────
+  const login  = (userData) => setUser(userData);
+  const logout = ()         => setUser(null);
 
   return (
     <AuthContext.Provider value={{ user, login, logout, loading }}>

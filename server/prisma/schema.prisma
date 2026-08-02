@@ -65,6 +65,11 @@ model Interview {
   completedAt     DateTime?
 
   report          Report?
+
+  // Indexes for common query patterns
+  @@index([userId])              // dashboard / history queries filter by userId
+  @@index([status])              // IN_PROGRESS queries no longer full-scan
+  @@index([userId, status])      // combined filter (e.g. active interviews per user)
 }
 
 

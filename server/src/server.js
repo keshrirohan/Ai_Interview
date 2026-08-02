@@ -1,19 +1,17 @@
 import express from "express";
-
 import cors from "cors";
-
 import dotenv from "dotenv";
-import { prisma } from "../lib/prisma.js";
-dotenv.config();
-
-import authRouter from "./routes/auth.routes.js";
 import cookieParser from "cookie-parser";
+
+import authRouter      from "./routes/auth.routes.js";
 import interviewRouter from "./routes/interview.routes.js";
 import dashboardRoutes from "./routes/dashboard.routes.js";
-import bcrypt from "bcrypt";
+
+dotenv.config();
 
 const app = express();
 
+// ─── Middleware ───────────────────────────────────────────────────────────────
 app.use(
   cors({
     origin: process.env.Frontend_URL,
@@ -23,20 +21,29 @@ app.use(
 app.use(cookieParser());
 app.use(express.json());
 
-app.get("/", (req, res) => {
-  res.json({
-    success: true,
-    message: "🚀 Welcome to EchoHire AI Backend",
-  });
+// ─── Routes ───────────────────────────────────────────────────────────────────
+app.get("/", (_req, res) => {
+  res.json({ success: true, message: "🚀 Welcome to EchoHire AI Backend" });
 });
 
-app.use("/api/auth", authRouter);
+app.use("/api/auth",      authRouter);
 app.use("/api/interview", interviewRouter);
 app.use("/api/dashboard", dashboardRoutes);
 
-const PORT = process.env.PORT || 5000;
+// ─── Global error handler ─────────────────────────────────────────────────────
+// Catches any error passed via next(err) from routes / middleware
+// Must have 4 parameters so Express recognises it as an error handler
+// eslint-disable-next-line no-unused-vars
+app.use((err, _req, res, _next) => {
+  console.error("[server] unhandled error:", err);
+  res.status(err.status || 500).json({
+    success: false,
+    message: err.message || "Internal server error.",
+  });
+});
 
-// Start the server
+// ─── Start ────────────────────────────────────────────────────────────────────
+const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-  console.log(`🚀 Server is running on http://localhost:${PORT}`);
+  console.log(`🚀 Server running on http://localhost:${PORT}`);
 });
