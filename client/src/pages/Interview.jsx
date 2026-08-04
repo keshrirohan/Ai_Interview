@@ -3,39 +3,65 @@
  *
  * Live interview session page.
  *
- * This is a PURE PRESENTATION component — it contains zero business logic.
- * All state, API calls, speech synthesis, and speech recognition are managed
- * inside useInterview(). This page only assembles the sub-components.
- *
- * Component tree:
- *   Interview
- *   ├── LoadingScreen          (while interview + first question load)
- *   ├── InterviewHeader        (title, description, error banner)
- *   ├── InterviewMeta          (role, difficulty, question counter)
- *   │   └── InterviewControls  (Pause, Submit Answer, End Interview)
- *   ├── AiPreview              (AI avatar + question text)
- *   ├── CameraPreview          (candidate webcam + mic toggle)
- *   └── TranscriptPanel        (live transcript + listening badge)
+ * Pure presentation component.
+ * All business logic is handled by useInterview(), useCamera(), and useRecorder().
  */
 
 import { useParams } from "react-router-dom";
 
-import useInterview       from "../hooks/useInterview";
-import LoadingScreen      from "../components/common/LoadingScreen";
-import InterviewHeader    from "../components/interview/InterviewHeader";
-import InterviewMeta      from "../components/interview/InterviewMeta";
-import InterviewControls  from "../components/interview/InterviewControls";
-import AiPreview          from "../components/interview/AiPreview";
-import CameraPreview      from "../components/interview/CameraPreview";
-import TranscriptPanel    from "../components/interview/TranscriptPanel";
+import { useAuth } from "../context/AuthContext";
+
+import useInterview from "../hooks/useInterview";
+import useCamera from "../hooks/useCamera";
+
+import LoadingScreen from "../components/common/LoadingScreen";
+
+import InterviewHeader from "../components/interview/InterviewHeader";
+import InterviewMeta from "../components/interview/InterviewMeta";
+import InterviewControls from "../components/interview/InterviewControls";
+import AiPreview from "../components/interview/AiPreview";
+import CameraPreview from "../components/interview/CameraPreview";
+import TranscriptPanel from "../components/interview/TranscriptPanel";
+import useMediaRecorder from "../hooks/useMediaRecorder";
+import { uploadAudio } from "../services/speech.service";
 
 const Interview = () => {
   const { id: interviewId } = useParams();
+  const { loading } = useAuth();
 
-  // Destructure everything from the hook — this page owns no logic
+  const {
+    stream,
+    loading: cameraLoading,
+    error: cameraError,
+    cameraEnabled,
+    micEnabled,
+    toggleCamera,
+    toggleMicrophone,
+  } = useCamera();
+
+  const {
+    audioBlob,
+    isRecording,
+    isPaused,
+    startRecording,
+    stopRecording,
+    pauseRecording,
+    resumeRecording,
+    resetRecording,
+  } = useMediaRecorder(stream);
+  /**
+   * Camera + microphone stream
+   */
+
+  /**
+   * Media recorder
+   */
+
+  /**
+   * Interview business logic
+   */
   const {
     interview,
-    loading,
     processing,
     currentQuestion,
     totalQuestions,
@@ -49,21 +75,32 @@ const Interview = () => {
     endInterview,
   } = useInterview(interviewId);
 
-  // Show spinner until interview details and first question are both ready
-  if (loading) return <LoadingScreen />;
+  if (loading) {
+    return <LoadingScreen />;
+  }
 
-  // Fallback display values in case interview data hasn't settled yet
-  const role       = interview?.role       || "Job Role";
+  const handleUpload = async () => {
+    if (!audioBlob) return;
+
+    try {
+      const data = await uploadAudio(audioBlob);
+
+      console.log(data);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const role = interview?.role || "Job Role";
   const difficulty = interview?.difficulty || "—";
 
   return (
     <div className="min-h-screen bg-zinc-50 transition-colors duration-300 dark:bg-zinc-950">
       <div className="mx-auto max-w-7xl px-4 py-24 sm:px-6 lg:px-8">
-
-        {/* Title + error banner */}
+        {/* Header */}
         <InterviewHeader error={error} />
 
-        {/* Role / difficulty / question counter + action buttons */}
+        {/* Interview Info */}
         <div className="mt-10 rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
           <InterviewMeta
             role={role}
@@ -71,6 +108,7 @@ const Interview = () => {
             currentQuestion={currentQuestion}
             totalQuestions={totalQuestions}
           />
+
           <InterviewControls
             isListening={isListening}
             processing={processing}
@@ -82,19 +120,43 @@ const Interview = () => {
           />
         </div>
 
-        {/* AI avatar and candidate camera — side by side on large screens */}
+        {/* Temporary Recording Test */}
+        <div className="mt-6 flex flex-wrap items-center gap-4 rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
+          <button onClick={startRecording}>Start</button>
+
+          <button onClick={pauseRecording}>Pause</button>
+
+          <button onClick={resumeRecording}>Resume</button>
+
+          <button onClick={stopRecording}>Stop</button>
+
+          <button onClick={resetRecording}>Reset</button>
+          <button onClick={handleUpload}>Upload Audio</button>
+
+          {audioBlob && <audio controls src={URL.createObjectURL(audioBlob)} />}
+        </div>
+
+        {/* AI + Camera */}
         <div className="mt-8 grid gap-6 lg:grid-cols-2">
           <div className="overflow-hidden rounded-2xl border border-zinc-200 shadow-sm dark:border-zinc-800">
             <AiPreview question={question} isListening={isListening} />
           </div>
+
           <div className="overflow-hidden rounded-2xl border border-zinc-200 shadow-sm dark:border-zinc-800">
-            <CameraPreview />
+            <CameraPreview
+              stream={stream}
+              loading={cameraLoading}
+              error={cameraError}
+              cameraEnabled={cameraEnabled}
+              micEnabled={micEnabled}
+              toggleCamera={toggleCamera}
+              toggleMicrophone={toggleMicrophone}
+            />
           </div>
         </div>
 
-        {/* Live transcript of the candidate's spoken answer */}
+        {/* Transcript */}
         <TranscriptPanel transcript={transcript} isListening={isListening} />
-
       </div>
     </div>
   );

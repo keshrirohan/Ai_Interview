@@ -30,7 +30,7 @@ router.post("/start", authMiddleware, startInterviewController);
 router.get("/:interviewId", authMiddleware, async (req, res) => {
   try {
     const { interviewId } = req.params;
-    const userId = req.user.userId;                     // auth middleware sets userId
+    const userId = req.user.userId; // auth middleware sets userId
 
     // 1. Fetch interview first — null-check BEFORE any AI call
     const interview = await prisma.interview.findFirst({
@@ -91,5 +91,7 @@ router.post(
   },
   processInterviewController,
 );
+
+router.post("/transcribe", authMiddleware);
 
 export default router;

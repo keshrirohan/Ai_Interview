@@ -3,9 +3,10 @@ import cors from "cors";
 import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
 
-import authRouter      from "./routes/auth.routes.js";
+import authRouter from "./routes/auth.routes.js";
 import interviewRouter from "./routes/interview.routes.js";
 import dashboardRoutes from "./routes/dashboard.routes.js";
+import speechRoutes from "./routes/speech.routes.js";
 
 dotenv.config();
 
@@ -26,9 +27,10 @@ app.get("/", (_req, res) => {
   res.json({ success: true, message: "🚀 Welcome to EchoHire AI Backend" });
 });
 
-app.use("/api/auth",      authRouter);
+app.use("/api/auth", authRouter);
 app.use("/api/interview", interviewRouter);
 app.use("/api/dashboard", dashboardRoutes);
+app.use("/api/speech", speechRoutes);
 
 // ─── Global error handler ─────────────────────────────────────────────────────
 // Catches any error passed via next(err) from routes / middleware

@@ -101,7 +101,11 @@ Return ONLY valid JSON:
  * @param {Array}  conversation — full conversation array from the DB
  * @returns {{ score: number, feedback: string, nextQuestion: string, expectedAnswer: string }}
  */
-export const processAnswer = async (jobDescription, difficulty, conversation) => {
+export const processAnswer = async (
+  jobDescription,
+  difficulty,
+  conversation,
+) => {
   const prompt = `
 You are a Senior Software Engineering Interviewer.
 
@@ -154,7 +158,11 @@ Return ONLY valid JSON:
  * @returns {{ score, technical, communication, confidence, problemSolving,
  *             strengths, weaknesses, recommendations, summary }}
  */
-export const generateFinalReport = async (jobDescription, difficulty, conversation) => {
+export const generateFinalReport = async (
+  jobDescription,
+  difficulty,
+  conversation,
+) => {
   const prompt = `
 You are a Senior Software Engineering Interviewer.
 
@@ -194,3 +202,5 @@ Return ONLY valid JSON:
     throw new Error("Failed to generate interview report. Please try again.");
   }
 };
+
+export { groqClient };

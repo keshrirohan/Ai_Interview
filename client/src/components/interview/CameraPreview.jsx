@@ -1,150 +1,84 @@
-/**
- * CameraPreview.jsx
- *
- * Manages the candidate's webcam and microphone streams during an interview.
- *
- * Responsibilities:
- *   - Request camera and microphone permissions from the browser
- *   - Display the live video feed (mirrored horizontally, as a webcam should be)
- *   - Provide toggle buttons for camera on/off and mic on/off
- *   - Release all media tracks on unmount to avoid the browser
- *     keeping the camera LED on after navigation
- *
- * Note: this component manages its OWN microphone stream (for the video preview
- * controls). The speech recognition microphone is managed separately by
- * useSpeechRecognition — they are independent streams.
- */
-
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { Camera, CameraOff, Mic, MicOff } from "lucide-react";
 
-function CameraPreview() {
+const CameraPreview = ({
+  stream,
+  loading,
+  error,
+  cameraEnabled,
+  micEnabled,
+  toggleCamera,
+  toggleMicrophone,
+}) => {
   const videoRef = useRef(null);
 
-  const cameraStream = useRef(null);
-  const micStream = useRef(null);
-
-  const [cameraOn, setCameraOn] = useState(false);
-  const [micOn, setMicOn] = useState(false);
-
-  // Camera
-  const startCamera = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: true,
-      });
-
-      cameraStream.current = stream;
-
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-      }
-
-      setCameraOn(true);
-    } catch (err) {
-      console.error(err);
-      setCameraOn(false);
-    }
-  };
-
-  const stopCamera = () => {
-    cameraStream.current?.getTracks().forEach((track) => track.stop());
-    cameraStream.current = null;
-
-    if (videoRef.current) {
-      videoRef.current.srcObject = null;
-    }
-
-    setCameraOn(false);
-  };
-
-  // Mic
-  const startMic = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        audio: true,
-      });
-
-      micStream.current = stream;
-      setMicOn(true);
-    } catch (err) {
-      console.error(err);
-      setMicOn(false);
-    }
-  };
-
-  const stopMic = () => {
-    micStream.current?.getTracks().forEach((track) => track.stop());
-    micStream.current = null;
-    setMicOn(false);
-  };
-
+  // Attach media stream to video
   useEffect(() => {
-    startCamera();
-    startMic();
+    if (!videoRef.current || !stream) return;
 
-    return () => {
-      stopCamera();
-      stopMic();
-    };
-  }, []);
+    videoRef.current.srcObject = stream;
+  }, [stream]);
 
   return (
-    <section className="relative flex h-full w-full overflow-hidden rounded-2xl border border-zinc-200 bg-zinc-100 dark:border-zinc-800 dark:bg-zinc-900">
+    <div className="relative flex h-[500px] w-full items-center justify-center overflow-hidden rounded-2xl bg-zinc-900">
       {/* Camera */}
-      <div className="relative flex-1">
+      {stream ? (
         <video
           ref={videoRef}
           autoPlay
           playsInline
           muted
-          className={`h-full w-full object-cover scale-x-[-1] ${
-            cameraOn ? "block" : "hidden"
-          }`}
+          className="h-full w-full object-cover"
         />
-
-        {!cameraOn && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 text-zinc-500 dark:text-zinc-400">
-            <CameraOff size={56} />
-            <p className="text-lg font-medium">Camera is Off</p>
-          </div>
-        )}
-
-        {/* Live Badge */}
-        {cameraOn && (
-          <div className="absolute left-4 top-4 flex items-center gap-2 rounded-full bg-black/60 px-3 py-1 text-sm text-white backdrop-blur">
-            <span className="h-2 w-2 animate-pulse rounded-full bg-red-500" />
-            Live
-          </div>
-        )}
-
-        {/* Controls */}
-        <div className="absolute bottom-5 left-1/2 flex -translate-x-1/2 gap-4 rounded-full bg-white/80 p-3 shadow-xl backdrop-blur dark:bg-zinc-900/80">
-          <button
-            onClick={() => (cameraOn ? stopCamera() : startCamera())}
-            className={`rounded-full p-4 transition ${
-              cameraOn
-                ? "bg-red-500 text-white hover:bg-red-600"
-                : "bg-emerald-500 text-white hover:bg-emerald-600"
-            }`}
-          >
-            {cameraOn ? <CameraOff size={22} /> : <Camera size={22} />}
-          </button>
-
-          <button
-            onClick={() => (micOn ? stopMic() : startMic())}
-            className={`rounded-full p-4 transition ${
-              micOn
-                ? "bg-red-500 text-white hover:bg-red-600"
-                : "bg-emerald-500 text-white hover:bg-emerald-600"
-            }`}
-          >
-            {micOn ? <MicOff size={22} /> : <Mic size={22} />}
-          </button>
+      ) : (
+        <div className="flex h-full w-full items-center justify-center text-zinc-400">
+          {loading ? "Starting Camera..." : "Camera Not Available"}
         </div>
+      )}
+
+      {/* Error */}
+      {error && (
+        <div className="absolute top-4 left-4 rounded-lg bg-red-600 px-3 py-2 text-sm text-white">
+          {error}
+        </div>
+      )}
+
+      {/* Controls */}
+      <div className="absolute bottom-5 flex gap-4">
+        {/* Camera */}
+        <button
+          onClick={toggleCamera}
+          className={`rounded-full p-3 transition ${
+            cameraEnabled
+              ? "bg-green-600 hover:bg-green-700"
+              : "bg-red-600 hover:bg-red-700"
+          }`}
+        >
+          {cameraEnabled ? (
+            <Camera className="h-5 w-5 text-white" />
+          ) : (
+            <CameraOff className="h-5 w-5 text-white" />
+          )}
+        </button>
+
+        {/* Microphone */}
+        <button
+          onClick={toggleMicrophone}
+          className={`rounded-full p-3 transition ${
+            micEnabled
+              ? "bg-green-600 hover:bg-green-700"
+              : "bg-red-600 hover:bg-red-700"
+          }`}
+        >
+          {micEnabled ? (
+            <Mic className="h-5 w-5 text-white" />
+          ) : (
+            <MicOff className="h-5 w-5 text-white" />
+          )}
+        </button>
       </div>
-    </section>
+    </div>
   );
-}
+};
 
 export default CameraPreview;
