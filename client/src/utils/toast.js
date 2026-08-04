@@ -1,3 +1,16 @@
+/**
+ * toast.js
+ *
+ * Thin wrappers around react-hot-toast with consistent styling.
+ * Import these instead of calling toast() directly so toast appearance
+ * is controlled from one place.
+ *
+ * Exports:
+ *   successToast(message) — green toast for successful actions
+ *   errorToast(message)   — red toast for errors and validation failures
+ *   loadingToast(message) — blue toast for in-progress operations
+ */
+
 import toast from "react-hot-toast";
 
 export const successToast = (message) => {

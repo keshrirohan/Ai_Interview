@@ -1,3 +1,17 @@
+/**
+ * Testimonials.jsx
+ *
+ * Infinite horizontal scroll carousel of user testimonials.
+ * Uses GSAP for both the entrance animation and the continuous scroll.
+ *
+ * Why data is defined outside the component:
+ *   TESTIMONIALS and SCROLL_ITEMS are plain arrays — defining them inside
+ *   would recreate them as new references on every render and restart GSAP.
+ *
+ * SCROLL_ITEMS duplicates the testimonials 4× so the carousel loops
+ * seamlessly. GSAP scrolls exactly half the total width before resetting.
+ */
+
 import { useRef } from "react";
 import { useGSAP } from "@gsap/react";
 import gsap from "gsap";

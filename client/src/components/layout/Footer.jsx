@@ -1,3 +1,11 @@
+/**
+ * Footer.jsx
+ *
+ * Site-wide footer displayed on every page.
+ * Contains the brand name, tagline, copyright, and social links.
+ * Rendered directly in main.jsx outside of <Routes> so it is always visible.
+ */
+
 import { FaGithub, FaLinkedin, FaEnvelope } from "react-icons/fa";
 const Footer = () => {
   return (

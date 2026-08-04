@@ -1,56 +1,84 @@
+/**
+ * useSpeechRecognition.js
+ *
+ * Custom hook responsible ONLY for microphone access and transcript building.
+ * It does NOT know anything about the interview flow — that is handled by
+ * useInterview.js, which calls this hook and uses what it returns.
+ *
+ * Key design decisions:
+ *
+ *   isListeningRef — mirrors the isListening state in a ref so that
+ *     startListening() and stopListening() always read the current value
+ *     instead of a stale closure. Without this, rapid calls can miss the
+ *     guard and trigger InvalidStateError from the browser API.
+ *
+ *   Transcript accumulation — each onresult event appends new speech segments
+ *     with setTranscript(prev => prev + newText) so no text is lost across
+ *     continuous utterances.
+ *
+ *   startListening() clears the transcript — every new answer starts fresh.
+ *
+ *   "no-speech" error suppression — this fires when the user is simply silent
+ *     and is not a real failure, so we ignore it to avoid noisy console output.
+ *
+ * Exposes:
+ *   transcript       — accumulated text from the current listening session
+ *   isListening      — true while the recognition engine is active
+ *   startListening() — starts recognition (no-op if already active)
+ *   stopListening()  — stops recognition  (no-op if already idle)
+ *   resetTranscript() — clears the transcript manually
+ */
+
 import { useEffect, useRef, useState } from "react";
 import { createSpeechRecognition } from "../utils/speechToText";
 
-/**
- * useSpeechRecognition
- *
- * Responsible ONLY for microphone access and building a running transcript.
- *
- * Key design decisions:
- *   - isListeningRef mirrors the isListening state so startListening /
- *     stopListening guards never read stale closure values.
- *   - transcript is also mirrored in a ref so callers can snapshot it
- *     synchronously without adding it to useCallback dep arrays.
- */
 const useSpeechRecognition = () => {
-  const recognitionRef   = useRef(null);
-  const isListeningRef   = useRef(false);   // ref mirror — always current value
+  const recognitionRef = useRef(null);
 
-  const [transcript, setTranscript] = useState("");
+  // Ref that mirrors isListening state — used inside callbacks to avoid
+  // stale closures. Always reflects the latest value immediately.
+  const isListeningRef = useRef(false);
+
+  const [transcript, setTranscript]   = useState("");
   const [isListening, setIsListening] = useState(false);
 
-  // Keep the ref in sync with the state
-  const setListening = (val) => {
-    isListeningRef.current = val;
-    setIsListening(val);
+  // Helper to update both the state and the ref together
+  const setListening = (value) => {
+    isListeningRef.current = value;
+    setIsListening(value);
   };
 
-  // ─── Setup ─────────────────────────────────────────────────────────────────
+  // ─── Setup: create recognition instance and attach event handlers ──────────
   useEffect(() => {
     recognitionRef.current = createSpeechRecognition();
     const recognition = recognitionRef.current;
 
+    // Called when the microphone successfully opens
     recognition.onstart = () => setListening(true);
 
+    // Called when recognition stops (either manually or automatically)
     recognition.onend = () => setListening(false);
 
-    // Accumulate — append new segments rather than overwriting
+    // Called each time a new speech segment is ready.
+    // We loop from resultIndex to capture only the NEW segment(s)
+    // and append them to the existing transcript.
     recognition.onresult = (event) => {
-      let newText = "";
+      let newSegment = "";
       for (let i = event.resultIndex; i < event.results.length; i++) {
-        newText += event.results[i][0].transcript;
+        newSegment += event.results[i][0].transcript;
       }
-      setTranscript((prev) => prev + newText);
+      setTranscript((prev) => prev + newSegment);
     };
 
     recognition.onerror = (event) => {
-      // "no-speech" is expected when the user is silent — not a real error
+      // "no-speech" is expected when the user pauses — not a real error
       if (event.error !== "no-speech") {
         console.error("[SpeechRecognition] error:", event.error);
       }
       setListening(false);
     };
 
+    // Cleanup: detach handlers and abort on unmount to prevent memory leaks
     return () => {
       recognition.onstart  = null;
       recognition.onend    = null;
@@ -63,24 +91,26 @@ const useSpeechRecognition = () => {
   // ─── Controls ──────────────────────────────────────────────────────────────
 
   /**
-   * Start recognition.
-   * Uses isListeningRef (not state) so the guard is never stale.
+   * Start microphone recording.
+   * Reads from isListeningRef (not state) to avoid stale closure guard.
+   * Clears the previous transcript so each answer starts fresh.
    */
   const startListening = () => {
-    if (isListeningRef.current) return;
-    setTranscript("");           // fresh transcript for each new answer
+    if (isListeningRef.current) return; // already recording — do nothing
+    setTranscript("");
     recognitionRef.current?.start();
   };
 
   /**
-   * Stop recognition.
-   * Uses isListeningRef so rapid calls can't cause InvalidStateError.
+   * Stop microphone recording.
+   * Reads from isListeningRef to ensure the guard is always current.
    */
   const stopListening = () => {
-    if (!isListeningRef.current) return;
+    if (!isListeningRef.current) return; // already stopped — do nothing
     recognitionRef.current?.stop();
   };
 
+  /** Clear the accumulated transcript manually (e.g. after answer submitted). */
   const resetTranscript = () => setTranscript("");
 
   return {

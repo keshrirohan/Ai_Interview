@@ -1,3 +1,14 @@
+/**
+ * Hero.jsx
+ *
+ * Landing page hero section.
+ * Contains the main headline, description, CTA buttons, and stat counters.
+ * Purely presentational — no props or state.
+ *
+ * Note: "Start Free Interview" links to /newinterview.
+ * "Watch Demo" is a placeholder — no handler yet.
+ */
+
 const Hero = () => {
   return (
     <section className="relative min-h-screen overflow-hidden bg-white dark:bg-zinc-950 transition-colors duration-300">

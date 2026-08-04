@@ -1,3 +1,16 @@
+/**
+ * ThemeToggle.jsx
+ *
+ * Button that toggles between light and dark mode.
+ *
+ * How it works:
+ *   - Stores the current theme in local state (defaults to "dark")
+ *   - On every change, toggles the "dark" class on <html> via classList
+ *   - Tailwind reads that class to switch between light and dark variants
+ *
+ * Rendered in both Navbar (desktop and mobile) so it is always accessible.
+ */
+
 import { Moon, Sun } from "lucide-react";
 import { useEffect, useState } from "react";
 

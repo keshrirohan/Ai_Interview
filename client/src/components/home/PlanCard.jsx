@@ -1,3 +1,16 @@
+/**
+ * PlanCard.jsx
+ *
+ * A single pricing card used by Plan.jsx.
+ *
+ * Props:
+ *   title    {string}   — plan name (e.g. "Free", "Pro")
+ *   price    {string}   — display price (e.g. "$0", "$19")
+ *   duration {string}   — billing period (e.g. "/month")
+ *   features {string[]} — list of included features
+ *   popular  {boolean}  — highlights the card in blue when true
+ */
+
 import { Check } from "lucide-react";
 
 const PlanCard = ({

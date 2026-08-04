@@ -1,3 +1,14 @@
+/**
+ * dashboard.controller.js
+ *
+ * Express route handler for the user dashboard.
+ * Reads the authenticated userId from req.user (set by authMiddleware),
+ * calls getDashboard, and returns the aggregated statistics.
+ *
+ * Handler:
+ *   getDashboardController — GET /api/dashboard
+ */
+
 import { getDashboard } from "../services/dashboard.service.js";
 
 // Get Dashboard Statistics

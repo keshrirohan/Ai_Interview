@@ -1,3 +1,13 @@
+/**
+ * JDs.jsx
+ *
+ * Displays a list of past/sample job descriptions on the NewInterview page.
+ * Each card lets the user start a new interview for that role.
+ *
+ * Current state: static placeholder data.
+ * TODO: replace with real data fetched from GET /api/interview (user history).
+ */
+
 import JDCard from "./JDCard";
 
 const JDs = () => {

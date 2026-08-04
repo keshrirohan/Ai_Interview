@@ -1,3 +1,16 @@
+/**
+ * interview.service.js
+ *
+ * Core business logic for all interview operations.
+ * Called by interview.controller.js — nothing in here touches req or res.
+ *
+ * Functions:
+ *   startInterview(userId, data)          — enforce plan limit, create session
+ *   getFirstQuestion(interviewId)         — generate or resume first question
+ *   processInterview(interviewId, answer) — evaluate answer, return next question
+ *                                           or final report if all questions done
+ */
+
 import { prisma } from "../../lib/prisma.js";
 import { PLAN_LIMITS } from "../utils/planLimit.js";
 import {

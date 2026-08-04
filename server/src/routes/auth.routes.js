@@ -1,3 +1,16 @@
+/**
+ * auth.routes.js
+ *
+ * Express routes for authentication.
+ * JWTs are stored exclusively in httpOnly cookies — never in the response body.
+ *
+ * Routes:
+ *   POST /login     — validate credentials, set JWT cookie
+ *   POST /logout    — clear JWT cookie
+ *   POST /register  — create account, set JWT cookie
+ *   GET  /me        — verify cookie, return current user data
+ */
+
 import express from "express";
 import { prisma } from "../../lib/prisma.js";
 import bcrypt from "bcrypt";

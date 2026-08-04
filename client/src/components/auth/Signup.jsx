@@ -1,86 +1,81 @@
+/**
+ * Signup.jsx
+ *
+ * Registration form component rendered inside the Navbar auth modal.
+ *
+ * Responsibilities:
+ *   - Collect name, email, and password
+ *   - POST to /api/auth/register
+ *   - Show success toast and close modal on success
+ *   - Show error toast on failure
+ *
+ * Props:
+ *   openLogin  {Function} — switch the modal to the Login view
+ *   closeModal {Function} — close the auth modal entirely
+ */
+
 import { useState } from "react";
 import { errorToast, successToast } from "../../utils/toast";
 
 const Signup = ({ openLogin, closeModal }) => {
-  // ==========================
-  // Form State
-  // ==========================
   const [formData, setFormData] = useState({
-    name: "",
-    email: "",
+    name:     "",
+    email:    "",
     password: "",
   });
 
-  // ==========================
-  // Handle Input Change
-  // ==========================
   const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
+    setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  // ==========================
-  // Handle Form Submit
-  // ==========================
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     try {
-      const url = `${import.meta.env.VITE_BACKEND_URL}/api/auth/register`;
-      console.log("Signup URL:", url);
-      const response = await fetch(url, {
-        method: "POST",
-        credentials: "include", // Include credentials for cookie handling
-        headers: {
-          "Content-Type": "application/json",
+      const response = await fetch(
+        `${import.meta.env.VITE_BACKEND_URL}/api/auth/register`,
+        {
+          method: "POST",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(formData),
         },
-        body: JSON.stringify(formData),
-      });
+      );
+
       const data = await response.json();
+
+      // Check success BEFORE showing any toast or closing the modal
       if (!data.success) {
-        throw new Error(data.message || "Signup failed");
+        errorToast(data.message || "Signup failed. Please try again.");
+        return;
       }
+
       successToast("Account created successfully!");
       closeModal();
-      console.log("Signup response:", data);
     } catch (error) {
-      errorToast(error.message || "Failed to create account");
-      console.error("Error during signup:", error);
+      errorToast(error.message || "Something went wrong. Please try again.");
     }
   };
 
   return (
     <div className="w-full max-w-md rounded-2xl border border-zinc-200 bg-white p-6 shadow-2xl dark:border-zinc-800 dark:bg-zinc-900 sm:p-8">
-      {/* ==========================
-          Heading
-      ========================== */}
 
+      {/* Heading */}
       <h1 className="text-center text-3xl font-bold text-zinc-900 dark:text-white sm:text-4xl">
         Create Account 🚀
       </h1>
-
       <p className="mt-3 text-center text-sm text-zinc-600 dark:text-zinc-400 sm:text-base">
-        Join EchoHire AI and start preparing for interviews with AI-powered mock
-        sessions.
+        Join EchoHire AI and start preparing with AI-powered mock interviews.
       </p>
 
-      {/* ==========================
-          Signup Form
-      ========================== */}
-
+      {/* Form */}
       <form onSubmit={handleSubmit} className="mt-8 space-y-5">
-        {/* name */}
 
+        {/* Name */}
         <div>
-          <label
-            htmlFor="name"
-            className="mb-2 block text-sm font-medium text-zinc-700 dark:text-zinc-300"
-          >
+          <label htmlFor="name" className="mb-2 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
             Name
           </label>
-
           <input
             id="name"
             name="name"
@@ -94,15 +89,10 @@ const Signup = ({ openLogin, closeModal }) => {
         </div>
 
         {/* Email */}
-
         <div>
-          <label
-            htmlFor="email"
-            className="mb-2 block text-sm font-medium text-zinc-700 dark:text-zinc-300"
-          >
+          <label htmlFor="email" className="mb-2 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
             Email
           </label>
-
           <input
             id="email"
             name="email"
@@ -116,15 +106,10 @@ const Signup = ({ openLogin, closeModal }) => {
         </div>
 
         {/* Password */}
-
         <div>
-          <label
-            htmlFor="password"
-            className="mb-2 block text-sm font-medium text-zinc-700 dark:text-zinc-300"
-          >
+          <label htmlFor="password" className="mb-2 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
             Password
           </label>
-
           <input
             id="password"
             name="password"
@@ -137,30 +122,6 @@ const Signup = ({ openLogin, closeModal }) => {
           />
         </div>
 
-        {/* Confirm Password */}
-
-        {/* <div>
-          <label
-            htmlFor="confirmPassword"
-            className="mb-2 block text-sm font-medium text-zinc-700 dark:text-zinc-300"
-          >
-            Confirm Password
-          </label>
-
-          <input
-            id="confirmPassword"
-            name="confirmPassword"
-            type="password"
-            placeholder="Confirm your password"
-            value={formData.confirmPassword}
-            onChange={handleChange}
-            required
-            className="w-full rounded-lg border border-zinc-300 bg-white px-4 py-3 text-zinc-900 placeholder:text-zinc-400 outline-none transition-all duration-300 focus:border-blue-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white dark:placeholder:text-zinc-500"
-          />
-        </div> */}
-
-        {/* Signup Button */}
-
         <button
           type="submit"
           className="w-full rounded-lg bg-blue-600 py-3 text-sm font-semibold text-white transition-all duration-300 hover:bg-blue-700 active:scale-95"
@@ -170,27 +131,19 @@ const Signup = ({ openLogin, closeModal }) => {
       </form>
 
       {/* Divider */}
-
       <div className="my-6 flex items-center">
-        <div className="h-px flex-1 bg-zinc-300 dark:bg-zinc-700"></div>
-
-        <span className="mx-4 text-sm text-zinc-500 dark:text-zinc-400">
-          OR
-        </span>
-
-        <div className="h-px flex-1 bg-zinc-300 dark:bg-zinc-700"></div>
+        <div className="h-px flex-1 bg-zinc-300 dark:bg-zinc-700" />
+        <span className="mx-4 text-sm text-zinc-500 dark:text-zinc-400">OR</span>
+        <div className="h-px flex-1 bg-zinc-300 dark:bg-zinc-700" />
       </div>
 
-      {/* Google Signup */}
-
+      {/* Google placeholder */}
       <button
         type="button"
         className="w-full rounded-lg border border-zinc-300 bg-white py-3 text-sm font-medium text-zinc-800 transition-all duration-300 hover:bg-zinc-100 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white dark:hover:bg-zinc-700"
       >
         Continue with Google
       </button>
-
-      {/* Login Link */}
 
       <p className="mt-6 text-center text-sm text-zinc-600 dark:text-zinc-400">
         Already have an account?{" "}

@@ -1,23 +1,35 @@
-import { startInterview } from "../services/interview.service.js";
+/**
+ * interview.controller.js
+ *
+ * Express route handlers for interview operations.
+ * Each controller is thin — it extracts data from req, calls a service
+ * function, and sends the response. Business logic stays in the service.
+ *
+ * Handlers:
+ *   startInterviewController    — POST /api/interview/start
+ *   generateInterviewQuestion   — POST /api/interview/:interviewId/question
+ *   processInterviewController  — POST /api/interview/:interviewId/process
+ */
+
+// Single import — previously startInterview was imported twice
 import {
+  startInterview,
   getFirstQuestion,
   processInterview,
 } from "../services/interview.service.js";
 
-// Start Interview Controller
+// ─── POST /start ──────────────────────────────────────────────────────────────
 export const startInterviewController = async (req, res) => {
   try {
-    // Call service
-
-    const interview = await startInterview(req.user.userId, req.body);
+    const newInterview = await startInterview(req.user.userId, req.body);
 
     res.status(201).json({
       success: true,
-      message: "Interview started successfully",
-      data: interview,
+      message: "Interview started successfully.",
+      data: newInterview,
     });
   } catch (error) {
-    console.error("Start Interview Error:", error);
+    console.error("[interview] startInterview error:", error.message);
     res.status(500).json({
       success: false,
       message: error.message,
@@ -25,20 +37,19 @@ export const startInterviewController = async (req, res) => {
   }
 };
 
-// Generate First Interview Question
+// ─── POST /:interviewId/question ──────────────────────────────────────────────
 export const generateInterviewQuestion = async (req, res) => {
   try {
     const { interviewId } = req.params;
-    console.log("Generating question for interviewId:", interviewId);
 
-    const question = await getFirstQuestion(interviewId);
+    const questionData = await getFirstQuestion(interviewId);
 
     res.json({
       success: true,
-      currentQuestion: 1,
-      data: question,
+      data: questionData,
     });
   } catch (error) {
+    console.error("[interview] getFirstQuestion error:", error.message);
     res.status(500).json({
       success: false,
       message: error.message,
@@ -46,34 +57,21 @@ export const generateInterviewQuestion = async (req, res) => {
   }
 };
 
-// Process Candidate Answer
+// ─── POST /:interviewId/process ───────────────────────────────────────────────
 export const processInterviewController = async (req, res) => {
   try {
-    // Get interview id from URL
     const { interviewId } = req.params;
+    const { answer }      = req.body;
 
-    // Get answer from frontend
-    const { answer } = req.body;
-
-    // Basic validation
-    if (!answer) {
-      return res.status(400).json({
-        success: false,
-        message: "Answer is required.",
-      });
-    }
-
-    // Process interview
+    // Note: answer is already validated and trimmed by the route middleware
     const result = await processInterview(interviewId, answer);
 
-    // Send response
     res.status(200).json({
       success: true,
       data: result,
     });
   } catch (error) {
-    console.error("Process Interview Error:", error.message);
-
+    console.error("[interview] processInterview error:", error.message);
     res.status(500).json({
       success: false,
       message: error.message,

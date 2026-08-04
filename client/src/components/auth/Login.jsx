@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useAuth } from "../../utils/useContext";
+import { useAuth } from "../../context/AuthContext";
 import { errorToast, successToast } from "../../utils/toast";
 
 const Login = ({ openSignup, openForgot, closeModal }) => {

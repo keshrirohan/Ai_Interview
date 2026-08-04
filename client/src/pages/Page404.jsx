@@ -1,3 +1,11 @@
+/**
+ * Page404.jsx
+ *
+ * 404 Not Found page — rendered for any route that doesn't match.
+ * Provides a Go Home button and a Go Back button so users can
+ * recover without using the browser's back button.
+ */
+
 import { Home, ArrowLeft } from "lucide-react";
 
 const NotFound = () => {

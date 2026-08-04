@@ -1,3 +1,11 @@
+/**
+ * Contact.jsx
+ *
+ * Contact page with info cards and a message form.
+ * Purely presentational — the form submit button has no handler yet.
+ * TODO: wire form to POST /api/contact once the endpoint is built.
+ */
+
 import { Mail, Phone, MapPin, Send, Globe } from "lucide-react";
 import { FaGithub, FaLinkedin } from "react-icons/fa";
 

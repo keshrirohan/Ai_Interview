@@ -1,3 +1,16 @@
+/**
+ * dashboard.service.js
+ *
+ * Business logic for the user dashboard.
+ * Aggregates interview and report statistics for a single user.
+ *
+ * Returns:
+ *   plan, interviewsUsed, remainingInterviews,
+ *   totalCompletedInterviews, averageScore, averageTechnical,
+ *   averageCommunication, averageConfidence, averageProblemSolving,
+ *   bestScore, lowestScore
+ */
+
 import { prisma } from "../../lib/prisma.js";
 import { PLAN_LIMITS } from "../utils/planLimit.js";
 

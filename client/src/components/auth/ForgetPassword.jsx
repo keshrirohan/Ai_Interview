@@ -1,44 +1,38 @@
+/**
+ * ForgetPassword.jsx
+ *
+ * "Forgot password" form rendered inside the Navbar auth modal.
+ *
+ * Current state: UI-only. The backend reset endpoint is not yet implemented.
+ * When it is ready, replace the TODO comment with the actual API call.
+ *
+ * Props:
+ *   openLogin {Function} — switch the modal back to the Login view
+ */
+
 import { useState } from "react";
 
 const ForgetPassword = ({ openLogin }) => {
-  // ==========================
-  // Form State
-  // ==========================
   const [email, setEmail] = useState("");
 
-  // ==========================
-  // Handle Submit
-  // ==========================
   const handleSubmit = (e) => {
     e.preventDefault();
-
-    console.log(email);
-
-    // Forgot Password API Here
+    // TODO: call POST /api/auth/forgot-password once the backend endpoint exists
   };
 
   return (
     <div className="w-full max-w-md rounded-2xl border border-zinc-200 bg-white p-5 shadow-2xl dark:border-zinc-800 dark:bg-zinc-900 sm:p-6 lg:p-8">
-      {/* ==========================
-          Heading
-      ========================== */}
 
+      {/* Heading */}
       <h1 className="text-center text-2xl font-bold text-zinc-900 dark:text-white sm:text-3xl">
         Forgot Password?
       </h1>
-
       <p className="mt-3 text-center text-sm text-zinc-600 dark:text-zinc-400">
-        Enter your registered email address and we'll send you a password reset
-        link.
+        Enter your registered email and we'll send you a password reset link.
       </p>
 
-      {/* ==========================
-          Form
-      ========================== */}
-
+      {/* Form */}
       <form onSubmit={handleSubmit} className="mt-8 space-y-5">
-        {/* Email */}
-
         <div>
           <label
             htmlFor="email"
@@ -46,7 +40,6 @@ const ForgetPassword = ({ openLogin }) => {
           >
             Email Address
           </label>
-
           <input
             id="email"
             type="email"
@@ -58,8 +51,6 @@ const ForgetPassword = ({ openLogin }) => {
           />
         </div>
 
-        {/* Submit Button */}
-
         <button
           type="submit"
           className="w-full rounded-lg bg-blue-600 py-3 font-semibold text-white transition-all duration-300 hover:bg-blue-700 active:scale-95"
@@ -67,8 +58,6 @@ const ForgetPassword = ({ openLogin }) => {
           Send Reset Link
         </button>
       </form>
-
-      {/* Back to Login */}
 
       <p className="mt-6 text-center text-sm text-zinc-600 dark:text-zinc-400">
         Remember your password?{" "}

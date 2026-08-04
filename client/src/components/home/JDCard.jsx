@@ -1,3 +1,16 @@
+/**
+ * JDCard.jsx
+ *
+ * Grid of job description cards, each showing role details and action buttons.
+ * Receives the full array of JD objects from JDs.jsx.
+ *
+ * Props:
+ *   jds {Array} — array of job description objects with:
+ *     title, company, experience, location, type, description, requirements[]
+ *
+ * Note: "Start Interview" and "View" buttons are placeholders — no handlers yet.
+ */
+
 import { Briefcase, Building2, MapPin, Clock } from "lucide-react";
 
 const JDCard = ({ jds }) => {

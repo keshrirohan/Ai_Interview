@@ -1,3 +1,20 @@
+/**
+ * CameraPreview.jsx
+ *
+ * Manages the candidate's webcam and microphone streams during an interview.
+ *
+ * Responsibilities:
+ *   - Request camera and microphone permissions from the browser
+ *   - Display the live video feed (mirrored horizontally, as a webcam should be)
+ *   - Provide toggle buttons for camera on/off and mic on/off
+ *   - Release all media tracks on unmount to avoid the browser
+ *     keeping the camera LED on after navigation
+ *
+ * Note: this component manages its OWN microphone stream (for the video preview
+ * controls). The speech recognition microphone is managed separately by
+ * useSpeechRecognition — they are independent streams.
+ */
+
 import { useEffect, useRef, useState } from "react";
 import { Camera, CameraOff, Mic, MicOff } from "lucide-react";
 

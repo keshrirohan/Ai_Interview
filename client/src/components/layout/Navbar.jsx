@@ -1,14 +1,31 @@
+/**
+ * Navbar.jsx
+ *
+ * Fixed top navigation bar rendered on every page via main.jsx.
+ *
+ * Responsibilities:
+ *   - Render nav links (Home, Interview, Contact) using React Router <Link>
+ *   - Show Login / Get Started buttons when logged out
+ *   - Show User avatar + Logout button when logged in
+ *   - Render the auth modal (Login / Signup / ForgotPassword) as an overlay
+ *   - Animate the mobile menu slide-in with GSAP
+ *
+ * Auth state comes from useAuth() (AuthContext).
+ * The mobile menu uses a ref + GSAP instead of CSS transitions for
+ * smoother performance on lower-end devices.
+ */
+
 import { useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
 import { Menu, User, X } from "lucide-react";
 
-import ThemeToggle from "./ThemeToggle";
-import Signup from "./auth/Signup";
-import Login from "./auth/Login";
-import ForgetPassword from "./auth/ForgetPassword";
-import { useAuth } from "../utils/useContext";
+import ThemeToggle from "../common/ThemeToggle";
+import Signup from "../auth/Signup";
+import Login from "../auth/Login";
+import ForgetPassword from "../auth/ForgetPassword";
+import { useAuth } from "../../context/AuthContext";
 
 gsap.registerPlugin(useGSAP);
 

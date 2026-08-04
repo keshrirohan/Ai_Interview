@@ -1,3 +1,16 @@
+/**
+ * interview.routes.js
+ *
+ * Express routes for all interview operations.
+ * Each route is protected by authMiddleware (requires a valid JWT cookie).
+ *
+ * Routes:
+ *   POST /start                   — create a new interview session
+ *   GET  /:interviewId            — fetch interview details + AI-generated role
+ *   POST /:interviewId/question   — get or generate the first question
+ *   POST /:interviewId/process    — submit an answer and receive the next question
+ */
+
 import express from "express";
 import authMiddleware from "../middlewares/auth.middleware.js";
 import {

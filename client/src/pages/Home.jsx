@@ -1,12 +1,21 @@
-import Hero from "../components/Hero";
+/**
+ * Home.jsx
+ *
+ * Landing page. Assembles three homepage sections:
+ *   Hero         — headline, CTA buttons, and stats
+ *   Plan         — pricing cards (Free / Pro / Enterprise)
+ *   Testimonials — infinite-scroll review carousel
+ *
+ * This page contains no logic — it is purely compositional.
+ */
 
-import Testimonials from "../components/Testimonials";
-
-import Plan from "../components/Plan";
+import Hero         from "../components/home/Hero";
+import Plan         from "../components/home/Plan";
+import Testimonials from "../components/home/Testimonials";
 
 function Home() {
   return (
-    <div className="min-h-screen bg-white dark:bg-zinc-950 transition-colors duration-300">
+    <div className="min-h-screen bg-white transition-colors duration-300 dark:bg-zinc-950">
       <Hero />
       <Plan />
       <Testimonials />

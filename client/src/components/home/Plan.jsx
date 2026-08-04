@@ -1,3 +1,16 @@
+/**
+ * Plan.jsx
+ *
+ * Pricing section on the Home page.
+ * Renders three PlanCard components (Free, Pro, Enterprise).
+ *
+ * The PLANS array is defined at module level so it is never recreated on
+ * re-render. When pricing changes, update only this array.
+ *
+ * Note: the plan limits shown here (e.g. "20 AI Interviews" for Free)
+ * should stay in sync with PLAN_LIMITS in server/src/utils/planLimit.js.
+ */
+
 import PlanCard from "./PlanCard";
 
 const plans = [
