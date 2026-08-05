@@ -99,9 +99,13 @@ const Navbar = () => {
             <ThemeToggle />
             {user ? (
               <>
-                <button className="rounded-lg bg-zinc-200 p-2 text-zinc-900 transition hover:scale-110 dark:bg-zinc-800 dark:text-white">
+                <Link
+                  to={`/profile/${user.id}`}
+                  title="My Profile"
+                  className="rounded-lg bg-zinc-200 p-2 text-zinc-900 transition hover:scale-110 dark:bg-zinc-800 dark:text-white"
+                >
                   <User size={18} />
-                </button>
+                </Link>
                 <button
                   onClick={handleLogout}
                   className="rounded-xl bg-blue-600 px-6 py-3 text-white transition hover:bg-blue-700"
@@ -131,9 +135,13 @@ const Navbar = () => {
           <div className="flex items-center gap-3 md:hidden">
             <ThemeToggle />
             {user && (
-              <button className="rounded-lg bg-zinc-200 p-2 text-zinc-900 dark:bg-zinc-800 dark:text-white">
+              <Link
+                to={`/profile/${user.id}`}
+                title="My Profile"
+                className="rounded-lg bg-zinc-200 p-2 text-zinc-900 dark:bg-zinc-800 dark:text-white"
+              >
                 <User size={18} />
-              </button>
+              </Link>
             )}
             <button onClick={() => setOpen((o) => !o)} aria-label="Toggle menu">
               {open
