@@ -8,6 +8,8 @@ import interviewRouter from "./routes/interview.routes.js";
 import dashboardRoutes from "./routes/dashboard.routes.js";
 import speechRoutes from "./routes/speech.routes.js";
 import paymentRoutes from "./routes/payment.routes.js";
+import contactRoutes from "./routes/contact.routes.js";
+import adminRoutes from "./routes/admin.routes.js";
 
 dotenv.config();
 
@@ -33,6 +35,8 @@ app.use("/api/interview", interviewRouter);
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/speech", speechRoutes);
 app.use("/api/payment", paymentRoutes);
+app.use("/api/contact", contactRoutes);
+app.use("/api/admin", adminRoutes);
 
 // ─── Global error handler ─────────────────────────────────────────────────────
 // Catches any error passed via next(err) from routes / middleware

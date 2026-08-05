@@ -81,7 +81,7 @@ const Navbar = () => {
           </Link>
 
           {/* Desktop nav links — key on <Link>, not inner <li> */}
-          <ul className="hidden gap-8 md:flex">
+          <ul className="hidden items-center gap-8 md:flex">
             {NAV_LINKS.map(({ label, to }) => (
               <li key={label}>
                 <Link
@@ -92,6 +92,16 @@ const Navbar = () => {
                 </Link>
               </li>
             ))}
+            {user && user.role === "ADMIN" && (
+              <li>
+                <Link
+                  to="/admin"
+                  className="cursor-pointer font-bold text-red-600 transition hover:text-red-500 dark:text-red-400"
+                >
+                  Admin Panel
+                </Link>
+              </li>
+            )}
           </ul>
 
           {/* Desktop auth controls */}

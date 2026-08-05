@@ -63,6 +63,8 @@ router.post("/login", async (req, res) => {
         id: user.id,
         name: user.name,
         email: user.email,
+        role: user.role,
+        plan: user.plan,
       },
     });
   } catch (error) {
@@ -110,6 +112,8 @@ router.post("/register", async (req, res) => {
         id: newUser.id,
         name: newUser.name,
         email: newUser.email,
+        role: newUser.role,
+        plan: newUser.plan,
       },
     });
   } catch (error) {
@@ -134,7 +138,7 @@ router.get("/me", async (req, res) => {
 
     const user = await prisma.user.findUnique({
       where: { id: decoded.userId },
-      select: { id: true, name: true, email: true }, // never return password
+      select: { id: true, name: true, email: true, role: true, plan: true }, // never return password
     });
 
     if (!user) {

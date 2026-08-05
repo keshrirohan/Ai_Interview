@@ -7,58 +7,44 @@ datasource db {
   provider = "postgresql"
 }
 
-
-
 // ===========================
 // User Model
 // ===========================
 
 model User {
-  // Primary Key
-  id String @id @default(cuid())
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  password  String
 
-  // User Information
-  name     String
-  email    String @unique
-  password String
+  role      Role     @default(USER)
+  plan      Plan     @default(FREE)
+  interviewsUsed Int  @default(0)
 
-  // SaaS Plan
-  plan             Plan @default(FREE)
-  interviewsUsed   Int  @default(0)
-  
-
-  // Timestamps
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  // ==========================
   // Relations
-  // ==========================
-
-  interviews   Interview[]
-  resume        Resume?
-  subscription  Subscription?
-  payments      Payment[]
-  overallReport OverallReport?
+  interviews      Interview[]
+  resume           Resume?
+  subscription     Subscription?
+  payments         Payment[]
+  overallReport    OverallReport?
+  contactMessages  ContactMessage[]
 }
 
 model Interview {
   id              String   @id @default(cuid())
-
   userId          String 
   user            User     @relation(fields: [userId], references: [id])
 
- 
-  
-  conversation   Json?
-
+  conversation    Json?
   jobDescription  String
 
   currentQuestion Int @default(1)
   maxQuestions    Int @default(10)
 
   difficulty      Difficulty
-
   status          InterviewStatus @default(IN_PROGRESS)
 
   startedAt       DateTime @default(now())
@@ -66,137 +52,108 @@ model Interview {
 
   report          Report?
 
-  // Indexes for common query patterns
-  @@index([userId])              // dashboard / history queries filter by userId
-  @@index([status])              // IN_PROGRESS queries no longer full-scan
-  @@index([userId, status])      // combined filter (e.g. active interviews per user)
+  @@index([userId])
+  @@index([status])
+  @@index([userId, status])
 }
 
-
 model Report {
+  id              String   @id @default(cuid())
+  interviewId     String   @unique
+  interview       Interview @relation(fields: [interviewId], references: [id])
 
-  id String @id @default(cuid())
+  score           Float
+  communication   Float
+  technical       Float
+  confidence      Float
+  problemSolving  Float
 
-  interviewId String @unique
-  interview Interview @relation(fields:[interviewId],references:[id])
-
-  score Float
-
-  communication Float
-
-  technical Float
-
-  confidence Float
-
-  problemSolving Float
-
-  strengths Json
-
-  weaknesses Json
-
+  strengths       Json
+  weaknesses      Json
   recommendations Json
+  summary         String
 
-  summary String
+  createdAt       DateTime @default(now())
+}
 
+model OverallReport {
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  user            User     @relation(fields: [userId], references: [id])
+
+  overallScore    Float
+  technical       Float
+  communication   Float
+  confidence      Float
+  problemSolving  Float
+
+  strengths       Json
+  weaknesses      Json
+  recommendations Json
+  summary         String
+  totalInterviews Int
+
+  updatedAt       DateTime @updatedAt
+}
+
+model ContactMessage {
+  id        String   @id @default(cuid())
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id])
+  name      String
+  email     String
+  subject   String?
+  message   String
+  status    String   @default("UNREAD") // UNREAD | READ | REPLIED
   createdAt DateTime @default(now())
 }
 
-
-model OverallReport{
-
-  id String @id @default(cuid())
-
-  userId String @unique
-
-  user User @relation(fields:[userId],references:[id])
-
-  overallScore Float
-
-  technical Float
-
-  communication Float
-
-  confidence Float
-
-  problemSolving Float
-
-  strengths Json
-
-  weaknesses Json
-
-  recommendations Json
-
-  summary String
-
-  totalInterviews Int
-  
-  updatedAt DateTime @updatedAt
-}
-
-
-model Resume{
-
-  id String @id @default(cuid())
-
-  userId String @unique
-
-  user User @relation(fields:[userId],references:[id])
-
-  fileUrl String
-
+model Resume {
+  id         String   @id @default(cuid())
+  userId     String   @unique
+  user       User     @relation(fields: [userId], references: [id])
+  fileUrl    String
   parsedText String
-
   uploadedAt DateTime @default(now())
 }
 
-model Subscription{
-
-  id String @id @default(cuid())
-
-  userId String @unique
-
-  user User @relation(fields:[userId],references:[id])
-
-  plan Plan
-
-  active Boolean @default(true)
-
+model Subscription {
+  id        String    @id @default(cuid())
+  userId    String    @unique
+  user      User      @relation(fields: [userId], references: [id])
+  plan      Plan
+  active    Boolean   @default(true)
   expiresAt DateTime?
 }
 
-
-model Payment{
-
-  id String @id @default(cuid())
-
-  userId String
-
-  user User @relation(fields:[userId],references:[id])
-
-  amount Float
-
-  status String
-
+model Payment {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  amount    Float
+  status    String
   paymentId String
-
   createdAt DateTime @default(now())
 }
 
+enum Role {
+  USER
+  ADMIN
+}
 
-
-enum Plan{
+enum Plan {
   FREE
   GOLD
   PLATINUM
 }
 
-enum Difficulty{
+enum Difficulty {
   EASY
   MEDIUM
   HARD
 }
 
-enum InterviewStatus{
+enum InterviewStatus {
   IN_PROGRESS
   COMPLETED
 }

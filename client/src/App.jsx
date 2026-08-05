@@ -23,6 +23,7 @@ import Contact      from "./pages/Contact";
 import NewInterview from "./pages/NewInterview";
 import Interview    from "./pages/Interview";
 import Profile      from "./pages/Profile";
+import AdminDashboard from "./pages/AdminDashboard";
 import NotFound     from "./pages/Page404";
 
 import PrivateRoutes from "./components/common/PrivateRoutes";
@@ -40,6 +41,7 @@ function App() {
       {/* Private routes — user must be logged in */}
       <Route element={<PrivateRoutes />}>
         <Route path="/profile/:id" element={<Profile />} />
+        <Route path="/admin" element={<AdminDashboard />} />
       </Route>
 
       {/* 404 catch-all */}
