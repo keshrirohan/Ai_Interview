@@ -24,6 +24,7 @@ import {
   X,
   Zap,
   HelpCircle,
+  Lock,
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import LoadingScreen from "../components/common/LoadingScreen";
@@ -988,13 +989,34 @@ const Profile = () => {
                               </div>
                             )}
 
-                            {/* AI Model Expected Answer */}
-                            {qa.expectedAnswer && (
+                            {/* AI Model Expected Answer (Subscription Gated) */}
+                            {qa.expectedAnswer ? (
                               <div className="mt-3 rounded-xl border border-emerald-200 bg-emerald-50/60 p-3.5 text-xs text-emerald-900 dark:border-emerald-900/50 dark:bg-emerald-950/40 dark:text-emerald-200">
                                 <div className="mb-1 flex items-center gap-1.5 font-bold text-emerald-800 dark:text-emerald-300">
                                   <CheckCircle2 size={15} /> Expected Ideal Answer (AI Model Answer):
                                 </div>
                                 <p className="leading-relaxed">{qa.expectedAnswer}</p>
+                              </div>
+                            ) : (
+                              <div className="relative mt-3 overflow-hidden rounded-xl border border-amber-200/80 bg-amber-50/20 p-4 dark:border-amber-900/40 dark:bg-amber-950/20">
+                                {/* Blurry unselectable text representation */}
+                                <div className="select-none blur-[5px] opacity-35 pointer-events-none text-xs text-zinc-600 dark:text-zinc-400">
+                                  <p className="font-bold mb-1">Expected Ideal Answer (AI Model Answer):</p>
+                                  <p>
+                                    To answer this question effectively, structure your response using the STAR method. 
+                                    Focus on key technical architectural trade-offs, scalability bottlenecks, and clear system design patterns.
+                                  </p>
+                                </div>
+
+                                {/* Lock Overlay Banner */}
+                                <div className="absolute inset-0 flex flex-col items-center justify-center bg-amber-50/85 p-3 text-center backdrop-blur-[1px] dark:bg-zinc-900/85">
+                                  <div className="flex items-center gap-1.5 text-xs font-bold text-amber-800 dark:text-amber-300">
+                                    <Lock size={14} /> Model Answer Locked (Subscription Feature)
+                                  </div>
+                                  <p className="mt-1 text-[11px] text-zinc-600 dark:text-zinc-400">
+                                    Upgrade to a Gold or Platinum plan to unlock full AI model answers.
+                                  </p>
+                                </div>
                               </div>
                             )}
 

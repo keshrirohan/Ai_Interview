@@ -83,6 +83,26 @@ export const getDashboard = async (userId) => {
   const limit = PLAN_LIMITS[user.plan] || 20;
   const remainingInterviews = Math.max(0, limit - user.interviewsUsed);
 
+  // 5. SECURITY GATE: expectedAnswer is ONLY sent to GOLD/PLATINUM subscribers!
+  // For FREE plan users, expectedAnswer is stripped to null on the server side
+  // so it cannot be inspected or bypassed via browser DevTools.
+  const isPaidUser = user.plan === "GOLD" || user.plan === "PLATINUM";
+
+  const sanitizedInterviews = interviews.map((item) => {
+    let convo = item.conversation;
+    if (Array.isArray(convo)) {
+      convo = convo.map((qa) => ({
+        ...qa,
+        expectedAnswer: isPaidUser ? qa.expectedAnswer : null,
+        isExpectedAnswerLocked: !isPaidUser,
+      }));
+    }
+    return {
+      ...item,
+      conversation: convo,
+    };
+  });
+
   return {
     user,
     stats: {
@@ -116,6 +136,6 @@ export const getDashboard = async (userId) => {
             )}/10. Continue honing your technical depth and structured communication to excel in upcoming software engineering interviews.`
           : "No completed interviews yet. Start your first mock interview to generate your performance report!",
     },
-    interviews,
+    interviews: sanitizedInterviews,
   };
 };
