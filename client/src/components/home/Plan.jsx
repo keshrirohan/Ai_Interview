@@ -1,81 +1,89 @@
-/**
- * Plan.jsx
- *
- * Pricing section on the Home page.
- * Renders three PlanCard components (Free, Pro, Enterprise).
- *
- * The PLANS array is defined at module level so it is never recreated on
- * re-render. When pricing changes, update only this array.
- *
- * Note: the plan limits shown here (e.g. "20 AI Interviews" for Free)
- * should stay in sync with PLAN_LIMITS in server/src/utils/planLimit.js.
- */
-
+import { useState } from "react";
 import PlanCard from "./PlanCard";
+import PaymentModal from "../payment/PaymentModal";
+import { useAuth } from "../../context/AuthContext";
 
 const plans = [
   {
     title: "Free",
-    price: "$0",
-    duration: "/month",
+    planKey: "FREE",
+    price: "₹0",
+    duration: "/forever",
     popular: false,
     features: [
       "20 AI Interviews",
-      "Basic AI Feedback",
+      "Basic AI Evaluation",
       "Interview History",
-      "Email Support",
+      "Standard Analytics",
     ],
   },
   {
-    title: "Pro",
-    price: "$19",
-    duration: "/month",
+    title: "Gold",
+    planKey: "GOLD",
+    price: "₹499",
+    duration: "/year",
     popular: true,
     features: [
-      "Unlimited AI Interviews",
-      "Advanced AI Feedback",
-      "Resume Analysis",
-      "Performance Analytics",
-      "Priority Support",
+      "50 AI Interviews",
+      "Full AI Model Expected Answers",
+      "Detailed Competency Analytics",
+      "Export Performance Reports",
+      "Priority AI Response",
     ],
   },
   {
-    title: "Enterprise",
-    price: "$49",
-    duration: "/month",
+    title: "Platinum",
+    planKey: "PLATINUM",
+    price: "₹999",
+    duration: "/year",
     popular: false,
     features: [
-      "Unlimited Team Members",
-      "Custom AI Models",
-      "Dedicated Manager",
-      "API Access",
-      "24/7 Premium Support",
+      "100 AI Interviews",
+      "Full AI Model Expected Answers",
+      "Advanced Skill Analytics & Trends",
+      "Custom Job Description Targeting",
+      "24/7 Priority Support",
     ],
   },
 ];
 
 const Plan = () => {
+  const { user } = useAuth();
+  const [selectedPlan, setSelectedPlan] = useState(null);
+
   return (
     <section className="w-full bg-zinc-50 py-20 transition-colors duration-300 dark:bg-zinc-950">
       <div className="mx-auto max-w-7xl px-6">
-        {/* Heading */}
         <div className="mb-14 text-center">
           <h2 className="text-4xl font-bold text-zinc-900 dark:text-white">
-            Simple Pricing
+            Flexible Subscription Plans
           </h2>
-
           <p className="mt-4 text-zinc-600 dark:text-zinc-400">
-            Choose the perfect plan to level up your interview preparation.
+            Choose the plan that fits your career goals and unlock full AI model answers.
           </p>
         </div>
 
-        {/* Cards */}
         <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
           {plans.map((plan) => (
-            <PlanCard key={plan.title} {...plan} />
+            <PlanCard
+              key={plan.title}
+              {...plan}
+              currentPlan={user?.plan}
+              onSelect={() => {
+                if (plan.planKey !== "FREE") {
+                  setSelectedPlan(plan.planKey);
+                }
+              }}
+            />
           ))}
         </div>
       </div>
+
+      <PaymentModal
+        isOpen={Boolean(selectedPlan)}
+        planName={selectedPlan || "GOLD"}
+        onClose={() => setSelectedPlan(null)}
+      />
     </section>
   );
 };

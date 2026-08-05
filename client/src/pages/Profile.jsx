@@ -28,6 +28,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import LoadingScreen from "../components/common/LoadingScreen";
+import PaymentModal from "../components/payment/PaymentModal";
 
 // ─── Graph 1: Performance Trend Line & Area Chart ───────────────────────────
 const PerformanceTrendChart = ({ interviews }) => {
@@ -277,6 +278,7 @@ const Profile = () => {
   const [statusFilter, setStatusFilter] = useState("ALL");
   const [difficultyFilter, setDifficultyFilter] = useState("ALL");
   const [selectedInterview, setSelectedInterview] = useState(null);
+  const [paymentModalPlan, setPaymentModalPlan] = useState(null);
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -391,6 +393,14 @@ const Profile = () => {
                 <span className="rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold text-blue-700 dark:bg-blue-500/10 dark:text-blue-400">
                   {stats.plan} PLAN
                 </span>
+                {stats.plan === "FREE" && (
+                  <button
+                    onClick={() => setPaymentModalPlan("GOLD")}
+                    className="flex items-center gap-1 rounded-full bg-gradient-to-r from-amber-500 to-yellow-400 px-3.5 py-1 text-xs font-bold text-black shadow-sm transition hover:scale-105"
+                  >
+                    <Zap size={13} /> Upgrade Plan
+                  </button>
+                )}
               </div>
               <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
                 {user.email}
@@ -1009,13 +1019,19 @@ const Profile = () => {
                                 </div>
 
                                 {/* Lock Overlay Banner */}
-                                <div className="absolute inset-0 flex flex-col items-center justify-center bg-amber-50/85 p-3 text-center backdrop-blur-[1px] dark:bg-zinc-900/85">
+                                <div className="absolute inset-0 flex flex-col items-center justify-center bg-amber-50/90 p-3 text-center backdrop-blur-[1px] dark:bg-zinc-900/90">
                                   <div className="flex items-center gap-1.5 text-xs font-bold text-amber-800 dark:text-amber-300">
                                     <Lock size={14} /> Model Answer Locked (Subscription Feature)
                                   </div>
                                   <p className="mt-1 text-[11px] text-zinc-600 dark:text-zinc-400">
-                                    Upgrade to a Gold or Platinum plan to unlock full AI model answers.
+                                    Upgrade to Gold or Platinum plan to unlock full AI model answers.
                                   </p>
+                                  <button
+                                    onClick={() => setPaymentModalPlan("GOLD")}
+                                    className="mt-2 flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-400 px-4 py-1.5 text-xs font-bold text-black shadow-md transition hover:scale-105"
+                                  >
+                                    <Zap size={14} /> Upgrade Now to Unlock
+                                  </button>
                                 </div>
                               </div>
                             )}
@@ -1039,6 +1055,14 @@ const Profile = () => {
           </div>
         </div>
       )}
+
+      {/* ── Payment Gateway Checkout Modal ─────────────────────────────── */}
+      <PaymentModal
+        isOpen={Boolean(paymentModalPlan)}
+        planName={paymentModalPlan || "GOLD"}
+        onClose={() => setPaymentModalPlan(null)}
+        onSuccess={() => window.location.reload()}
+      />
     </div>
   );
 };

@@ -1,25 +1,17 @@
-/**
- * PlanCard.jsx
- *
- * A single pricing card used by Plan.jsx.
- *
- * Props:
- *   title    {string}   — plan name (e.g. "Free", "Pro")
- *   price    {string}   — display price (e.g. "$0", "$19")
- *   duration {string}   — billing period (e.g. "/month")
- *   features {string[]} — list of included features
- *   popular  {boolean}  — highlights the card in blue when true
- */
-
 import { Check } from "lucide-react";
 
 const PlanCard = ({
   title,
+  planKey,
   price,
   duration,
   features,
   popular = false,
+  currentPlan,
+  onSelect,
 }) => {
+  const isCurrent = currentPlan === planKey;
+
   return (
     <div
       className={`relative flex h-full flex-col rounded-3xl border p-8 transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl
@@ -37,7 +29,14 @@ const PlanCard = ({
       )}
 
       {/* Plan Title */}
-      <h2 className="text-2xl font-bold">{title}</h2>
+      <div className="flex items-center justify-between">
+        <h2 className="text-2xl font-bold">{title}</h2>
+        {isCurrent && (
+          <span className="rounded-full bg-emerald-500/20 px-3 py-1 text-xs font-bold text-emerald-400">
+            Current Plan
+          </span>
+        )}
+      </div>
 
       {/* Price */}
       <div className="mt-5 flex items-end gap-1">
@@ -52,14 +51,13 @@ const PlanCard = ({
       </div>
 
       {/* Features */}
-      <ul className="mt-8 space-y-4 flex-1">
+      <ul className="mt-8 flex-1 space-y-4">
         {features.map((feature, index) => (
           <li key={index} className="flex items-center gap-3">
             <Check
               size={18}
               className={popular ? "text-white" : "text-green-500"}
             />
-
             <span
               className={
                 popular
@@ -73,16 +71,22 @@ const PlanCard = ({
         ))}
       </ul>
 
-      {/* Button */}
+      {/* Action Button */}
       <button
-        className={`mt-10 w-full rounded-xl py-3 font-semibold transition duration-300
+        onClick={onSelect}
+        disabled={isCurrent}
+        className={`mt-10 w-full rounded-xl py-3.5 font-semibold transition duration-300 disabled:opacity-60 disabled:cursor-not-allowed
         ${
           popular
             ? "bg-white text-blue-600 hover:bg-zinc-100"
             : "bg-blue-600 text-white hover:bg-blue-700"
         }`}
       >
-        {title === "Free" ? "Get Started" : "Choose Plan"}
+        {isCurrent
+          ? "Active Plan"
+          : planKey === "FREE"
+          ? "Current Plan"
+          : `Upgrade to ${title}`}
       </button>
     </div>
   );

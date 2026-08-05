@@ -7,6 +7,7 @@ import authRouter from "./routes/auth.routes.js";
 import interviewRouter from "./routes/interview.routes.js";
 import dashboardRoutes from "./routes/dashboard.routes.js";
 import speechRoutes from "./routes/speech.routes.js";
+import paymentRoutes from "./routes/payment.routes.js";
 
 dotenv.config();
 
@@ -31,6 +32,7 @@ app.use("/api/auth", authRouter);
 app.use("/api/interview", interviewRouter);
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/speech", speechRoutes);
+app.use("/api/payment", paymentRoutes);
 
 // ─── Global error handler ─────────────────────────────────────────────────────
 // Catches any error passed via next(err) from routes / middleware
