@@ -1,14 +1,19 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import {
+  Activity,
+  AlertTriangle,
+  ArrowUpRight,
   Award,
   BarChart3,
+  BookOpen,
   Calendar,
   CheckCircle2,
   ChevronRight,
   Clock,
   FileText,
   Filter,
+  Layers,
   Lightbulb,
   Search,
   Sparkles,
@@ -17,15 +22,249 @@ import {
   TrendingUp,
   User as UserIcon,
   X,
-  AlertTriangle,
-  ArrowUpRight,
-  Layers,
-  Activity,
   Zap,
+  HelpCircle,
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import LoadingScreen from "../components/common/LoadingScreen";
 
+// ─── Graph 1: Performance Trend Line & Area Chart ───────────────────────────
+const PerformanceTrendChart = ({ interviews }) => {
+  const completed = (interviews || [])
+    .filter((i) => i.report && i.report.score !== null)
+    .reverse(); // oldest first
+
+  if (completed.length === 0) {
+    return (
+      <div className="flex h-48 items-center justify-center text-xs text-zinc-400">
+        No completed interviews yet to render performance trend line graph.
+      </div>
+    );
+  }
+
+  const width = 600;
+  const height = 200;
+  const padding = 40;
+
+  const points = completed.map((item, index) => {
+    const x =
+      completed.length === 1
+        ? width / 2
+        : padding + (index * (width - padding * 2)) / (completed.length - 1);
+    const score = item.report.score;
+    const y = height - padding - (score / 10) * (height - padding * 2);
+    return { x, y, score, date: new Date(item.startedAt).toLocaleDateString() };
+  });
+
+  const pathD =
+    points.length === 1
+      ? `M ${points[0].x - 30} ${points[0].y} L ${points[0].x + 30} ${points[0].y}`
+      : points.reduce((acc, point, i) => {
+          return i === 0 ? `M ${point.x} ${point.y}` : `${acc} L ${point.x} ${point.y}`;
+        }, "");
+
+  const areaD =
+    points.length === 1
+      ? ""
+      : `${pathD} L ${points[points.length - 1].x} ${height - padding} L ${points[0].x} ${height - padding} Z`;
+
+  return (
+    <div className="w-full overflow-x-auto">
+      <svg viewBox={`0 0 ${width} ${height}`} className="w-full overflow-visible">
+        <defs>
+          <linearGradient id="trendGradient" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#3b82f6" stopOpacity="0.35" />
+            <stop offset="100%" stopColor="#3b82f6" stopOpacity="0.0" />
+          </linearGradient>
+        </defs>
+
+        {/* Y-axis gridlines */}
+        {[0, 2.5, 5, 7.5, 10].map((val) => {
+          const y = height - padding - (val / 10) * (height - padding * 2);
+          return (
+            <g key={val}>
+              <line
+                x1={padding}
+                y1={y}
+                x2={width - padding}
+                y2={y}
+                stroke="#e4e4e7"
+                strokeDasharray="4 4"
+                className="dark:stroke-zinc-800"
+              />
+              <text
+                x={padding - 10}
+                y={y + 4}
+                textAnchor="end"
+                className="text-[10px] font-medium fill-zinc-400"
+              >
+                {val}
+              </text>
+            </g>
+          );
+        })}
+
+        {/* Area fill under curve */}
+        {areaD && <path d={areaD} fill="url(#trendGradient)" />}
+
+        {/* Line */}
+        <path
+          d={pathD}
+          fill="none"
+          stroke="#3b82f6"
+          strokeWidth="3"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+
+        {/* Dots & Labels */}
+        {points.map((pt, i) => (
+          <g key={i} className="group cursor-pointer">
+            <circle
+              cx={pt.x}
+              cy={pt.y}
+              r="6"
+              fill="#3b82f6"
+              className="transition-all duration-200 group-hover:r-8 stroke-white dark:stroke-zinc-900 stroke-2"
+            />
+            <text
+              x={pt.x}
+              y={pt.y - 12}
+              textAnchor="middle"
+              className="text-[11px] font-bold fill-zinc-900 dark:fill-white"
+            >
+              {pt.score}
+            </text>
+          </g>
+        ))}
+      </svg>
+    </div>
+  );
+};
+
+// ─── Graph 2: Competency Breakdown Bar Chart ───────────────────────────────
+const CompetencyRadarChart = ({ stats }) => {
+  const metrics = [
+    { label: "Technical Competency", score: stats.averageTechnical || 0, color: "#3b82f6" },
+    { label: "Communication Skill", score: stats.averageCommunication || 0, color: "#a855f7" },
+    { label: "Problem Solving", score: stats.averageProblemSolving || 0, color: "#f59e0b" },
+    { label: "Confidence Level", score: stats.averageConfidence || 0, color: "#10b981" },
+  ];
+
+  return (
+    <div className="space-y-4">
+      {metrics.map((m) => (
+        <div key={m.label} className="space-y-1.5">
+          <div className="flex justify-between text-xs font-semibold text-zinc-700 dark:text-zinc-300">
+            <span className="flex items-center gap-2">
+              <span
+                className="h-2.5 w-2.5 rounded-full"
+                style={{ backgroundColor: m.color }}
+              />
+              {m.label}
+            </span>
+            <span className="font-bold">{m.score} / 10</span>
+          </div>
+          <div className="h-3 w-full overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-800">
+            <div
+              className="h-full rounded-full transition-all duration-700"
+              style={{
+                width: `${(m.score / 10) * 100}%`,
+                backgroundColor: m.color,
+              }}
+            />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+};
+
+// ─── Graph 3: Difficulty Breakdown Chart ────────────────────────────────────
+const DifficultyBreakdownChart = ({ interviews }) => {
+  const counts = { EASY: 0, MEDIUM: 0, HARD: 0 };
+  const scores = { EASY: [], MEDIUM: [], HARD: [] };
+
+  (interviews || []).forEach((item) => {
+    if (counts[item.difficulty] !== undefined) {
+      counts[item.difficulty]++;
+      if (item.report && item.report.score) {
+        scores[item.difficulty].push(item.report.score);
+      }
+    }
+  });
+
+  const getAvg = (arr) =>
+    arr.length ? (arr.reduce((a, b) => a + b, 0) / arr.length).toFixed(1) : 0;
+
+  const diffs = [
+    { label: "Easy", count: counts.EASY, avg: getAvg(scores.EASY), color: "bg-emerald-500" },
+    { label: "Medium", count: counts.MEDIUM, avg: getAvg(scores.MEDIUM), color: "bg-amber-500" },
+    { label: "Hard", count: counts.HARD, avg: getAvg(scores.HARD), color: "bg-rose-500" },
+  ];
+
+  return (
+    <div className="grid gap-4 sm:grid-cols-3">
+      {diffs.map((d) => (
+        <div
+          key={d.label}
+          className="rounded-2xl border border-zinc-200 bg-zinc-50 p-4 text-center dark:border-zinc-800 dark:bg-zinc-950"
+        >
+          <div className="flex items-center justify-center gap-2">
+            <span className={`h-2.5 w-2.5 rounded-full ${d.color}`} />
+            <span className="text-xs font-bold uppercase tracking-wider text-zinc-600 dark:text-zinc-400">
+              {d.label} Difficulty
+            </span>
+          </div>
+          <h4 className="mt-2 text-2xl font-bold text-zinc-900 dark:text-white">
+            {d.avg} <span className="text-xs font-normal text-zinc-400">avg score</span>
+          </h4>
+          <p className="mt-1 text-xs text-zinc-500">{d.count} session(s)</p>
+        </div>
+      ))}
+    </div>
+  );
+};
+
+// ─── Graph 4: Question-by-Question Score Bar Chart ──────────────────────────
+const QuestionScoresBarChart = ({ conversation }) => {
+  if (!Array.isArray(conversation) || conversation.length === 0) return null;
+
+  return (
+    <div className="rounded-2xl border border-zinc-200 bg-zinc-50/80 p-5 dark:border-zinc-800 dark:bg-zinc-950/60">
+      <h4 className="mb-4 text-xs font-semibold uppercase tracking-wider text-zinc-500">
+        Question Score Breakdown Graph
+      </h4>
+      <div className="flex h-36 items-end gap-3 px-2">
+        {conversation.map((qa, index) => {
+          const score = qa.score || 0;
+          const heightPct = Math.max(10, (score / 10) * 100);
+          return (
+            <div
+              key={index}
+              className="group relative flex flex-1 flex-col items-center gap-2"
+            >
+              <span className="text-xs font-bold text-zinc-700 dark:text-zinc-300">
+                {score}
+              </span>
+              <div className="flex h-full w-full max-w-[40px] items-end rounded-t-lg bg-zinc-200 dark:bg-zinc-800">
+                <div
+                  className="w-full rounded-t-lg bg-blue-600 transition-all duration-500 group-hover:bg-blue-500"
+                  style={{ height: `${heightPct}%` }}
+                />
+              </div>
+              <span className="text-[10px] font-medium text-zinc-500">
+                Q{index + 1}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
+
+// ─── Main Profile Component ──────────────────────────────────────────────────
 const Profile = () => {
   const { user: authUser } = useAuth();
   const [data, setData] = useState(null);
@@ -221,7 +460,8 @@ const Profile = () => {
             </div>
           </div>
           <h2 className="mt-4 text-3xl font-bold text-zinc-900 dark:text-white">
-            {stats.averageScore} <span className="text-sm font-normal text-zinc-400">/ 10</span>
+            {stats.averageScore}{" "}
+            <span className="text-sm font-normal text-zinc-400">/ 10</span>
           </h2>
           <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
             Best score: {stats.bestScore}
@@ -238,7 +478,8 @@ const Profile = () => {
             </div>
           </div>
           <h2 className="mt-4 text-3xl font-bold text-zinc-900 dark:text-white">
-            {stats.averageTechnical} <span className="text-sm font-normal text-zinc-400">/ 10</span>
+            {stats.averageTechnical}{" "}
+            <span className="text-sm font-normal text-zinc-400">/ 10</span>
           </h2>
           <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
             Domain competency
@@ -255,12 +496,59 @@ const Profile = () => {
             </div>
           </div>
           <h2 className="mt-4 text-3xl font-bold text-zinc-900 dark:text-white">
-            {stats.averageCommunication} <span className="text-sm font-normal text-zinc-400">/ 10</span>
+            {stats.averageCommunication}{" "}
+            <span className="text-sm font-normal text-zinc-400">/ 10</span>
           </h2>
           <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
             Clarity & structure
           </p>
         </div>
+      </div>
+
+      {/* ── Visual Analytics Graphs Section ─────────────────────────────── */}
+      <div className="grid gap-8 lg:grid-cols-2">
+        {/* Graph 1: Performance Trend Line Chart */}
+        <div className="rounded-3xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+          <div className="mb-4 flex items-center justify-between">
+            <div>
+              <h3 className="flex items-center gap-2 text-base font-bold text-zinc-900 dark:text-white">
+                <TrendingUp size={18} className="text-blue-500" /> Session Score Trend Graph
+              </h3>
+              <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                Score progression across completed interview sessions
+              </p>
+            </div>
+          </div>
+          <PerformanceTrendChart interviews={interviews} />
+        </div>
+
+        {/* Graph 2: Competency Breakdown Bar Graph */}
+        <div className="rounded-3xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+          <div className="mb-4 flex items-center justify-between">
+            <div>
+              <h3 className="flex items-center gap-2 text-base font-bold text-zinc-900 dark:text-white">
+                <BarChart3 size={18} className="text-purple-500" /> Skill Competency Breakdown
+              </h3>
+              <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                Visual evaluation across technical, communication & confidence
+              </p>
+            </div>
+          </div>
+          <CompetencyRadarChart stats={stats} />
+        </div>
+      </div>
+
+      {/* Graph 3: Difficulty Breakdown Chart */}
+      <div className="rounded-3xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+        <div className="mb-4">
+          <h3 className="flex items-center gap-2 text-base font-bold text-zinc-900 dark:text-white">
+            <Layers size={18} className="text-amber-500" /> Performance by Difficulty Graph
+          </h3>
+          <p className="text-xs text-zinc-500 dark:text-zinc-400">
+            Average score achieved on Easy, Medium, and Hard difficulty interviews
+          </p>
+        </div>
+        <DifficultyBreakdownChart interviews={interviews} />
       </div>
 
       {/* ── Overall Performance Analysis Report ───────────────────────── */}
@@ -284,69 +572,8 @@ const Profile = () => {
           </div>
         </div>
 
-        {/* Detailed Competency Progress Bars */}
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-          <div className="rounded-2xl border border-zinc-100 bg-zinc-50 p-4 dark:border-zinc-800 dark:bg-zinc-950">
-            <div className="flex justify-between text-xs font-semibold text-zinc-700 dark:text-zinc-300">
-              <span>Technical Competency</span>
-              <span>{overallReport.technical}/10</span>
-            </div>
-            <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-800">
-              <div
-                className="h-full bg-blue-600"
-                style={{ width: `${(overallReport.technical / 10) * 100}%` }}
-              />
-            </div>
-          </div>
-
-          <div className="rounded-2xl border border-zinc-100 bg-zinc-50 p-4 dark:border-zinc-800 dark:bg-zinc-950">
-            <div className="flex justify-between text-xs font-semibold text-zinc-700 dark:text-zinc-300">
-              <span>Communication Skill</span>
-              <span>{overallReport.communication}/10</span>
-            </div>
-            <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-800">
-              <div
-                className="h-full bg-purple-600"
-                style={{
-                  width: `${(overallReport.communication / 10) * 100}%`,
-                }}
-              />
-            </div>
-          </div>
-
-          <div className="rounded-2xl border border-zinc-100 bg-zinc-50 p-4 dark:border-zinc-800 dark:bg-zinc-950">
-            <div className="flex justify-between text-xs font-semibold text-zinc-700 dark:text-zinc-300">
-              <span>Problem Solving</span>
-              <span>{overallReport.problemSolving}/10</span>
-            </div>
-            <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-800">
-              <div
-                className="h-full bg-amber-600"
-                style={{
-                  width: `${(overallReport.problemSolving / 10) * 100}%`,
-                }}
-              />
-            </div>
-          </div>
-
-          <div className="rounded-2xl border border-zinc-100 bg-zinc-50 p-4 dark:border-zinc-800 dark:bg-zinc-950">
-            <div className="flex justify-between text-xs font-semibold text-zinc-700 dark:text-zinc-300">
-              <span>Confidence Level</span>
-              <span>{overallReport.confidence}/10</span>
-            </div>
-            <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-800">
-              <div
-                className="h-full bg-emerald-600"
-                style={{
-                  width: `${(overallReport.confidence / 10) * 100}%`,
-                }}
-              />
-            </div>
-          </div>
-        </div>
-
         {/* Executive Summary */}
-        <div className="mt-6 rounded-2xl border border-zinc-200 bg-zinc-50/80 p-5 dark:border-zinc-800 dark:bg-zinc-950/60">
+        <div className="rounded-2xl border border-zinc-200 bg-zinc-50/80 p-5 dark:border-zinc-800 dark:bg-zinc-950/60">
           <h3 className="mb-2 text-sm font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
             Executive Summary
           </h3>
@@ -653,6 +880,13 @@ const Profile = () => {
                   </div>
                 </div>
 
+                {/* Graph 4: Question Scores Bar Chart */}
+                {Array.isArray(selectedInterview.conversation) && (
+                  <QuestionScoresBarChart
+                    conversation={selectedInterview.conversation}
+                  />
+                )}
+
                 {/* Summary */}
                 <div className="rounded-2xl border border-zinc-200 bg-zinc-50 p-5 dark:border-zinc-800 dark:bg-zinc-950">
                   <h4 className="text-xs font-semibold uppercase tracking-wider text-zinc-500">
@@ -715,7 +949,7 @@ const Profile = () => {
                   </ul>
                 </div>
 
-                {/* Conversation Q&A History */}
+                {/* Conversation Q&A History with Expected Answer */}
                 {Array.isArray(selectedInterview.conversation) &&
                   selectedInterview.conversation.length > 0 && (
                     <div className="space-y-4 pt-4 border-t border-zinc-200 dark:border-zinc-800">
@@ -744,18 +978,33 @@ const Profile = () => {
                               {qa.question}
                             </p>
 
+                            {/* Candidate's Answer */}
                             {qa.answer && (
-                              <div className="mt-3 rounded-xl border border-zinc-200 bg-white p-3 text-xs text-zinc-700 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300">
-                                <span className="font-semibold text-zinc-500">
-                                  Your Answer:
+                              <div className="mt-3 rounded-xl border border-zinc-200 bg-white p-3.5 text-xs text-zinc-700 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300">
+                                <span className="font-bold text-zinc-900 dark:text-white">
+                                  Candidate Answer:
                                 </span>{" "}
                                 {qa.answer}
                               </div>
                             )}
 
+                            {/* AI Model Expected Answer */}
+                            {qa.expectedAnswer && (
+                              <div className="mt-3 rounded-xl border border-emerald-200 bg-emerald-50/60 p-3.5 text-xs text-emerald-900 dark:border-emerald-900/50 dark:bg-emerald-950/40 dark:text-emerald-200">
+                                <div className="mb-1 flex items-center gap-1.5 font-bold text-emerald-800 dark:text-emerald-300">
+                                  <CheckCircle2 size={15} /> Expected Ideal Answer (AI Model Answer):
+                                </div>
+                                <p className="leading-relaxed">{qa.expectedAnswer}</p>
+                              </div>
+                            )}
+
+                            {/* Feedback */}
                             {qa.feedback && (
-                              <p className="mt-2 text-xs italic text-zinc-500 dark:text-zinc-400">
-                                Feedback: {qa.feedback}
+                              <p className="mt-3 text-xs leading-relaxed text-zinc-600 dark:text-zinc-400">
+                                <span className="font-semibold text-zinc-800 dark:text-zinc-200">
+                                  AI Feedback:
+                                </span>{" "}
+                                {qa.feedback}
                               </p>
                             )}
                           </div>
