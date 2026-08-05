@@ -5,12 +5,12 @@
  *
  * Props:
  *   question    {string}  – the question text to display
- *   isListening {boolean} – when true the badge switches to "Listening to you…"
+ *   isRecording {boolean} – when true the badge switches to "Recording…"
+ *   isSpeaking  {boolean} – when true the badge switches to "AI is speaking…"
  */
-const AiPreview = ({ question, isListening = false }) => {
+const AiPreview = ({ question, isRecording, isSpeaking }) => {
   return (
     <section className="flex h-full w-full flex-col items-center justify-center gap-8 rounded-2xl border border-zinc-200 bg-zinc-100 p-6 transition-colors duration-300 dark:border-zinc-800 dark:bg-zinc-900">
-
       {/* AI Avatar */}
       <div className="relative flex aspect-square w-40 items-center justify-center rounded-full border border-zinc-300 bg-white shadow-xl transition-all duration-300 sm:w-52 md:w-64 lg:w-72 dark:border-zinc-700 dark:bg-black">
         {/* Animated pulse ring */}
@@ -23,15 +23,20 @@ const AiPreview = ({ question, isListening = false }) => {
       </div>
 
       {/* Status badge — switches between AI speaking and listening */}
-      {isListening ? (
-        <div className="flex items-center gap-2 rounded-full bg-blue-100 px-4 py-2 text-sm font-medium text-blue-700 dark:bg-blue-500/10 dark:text-blue-400">
-          <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-blue-500" />
-          Listening to you…
+      {isRecording ? (
+        <div className="flex items-center gap-2 rounded-full bg-red-100 px-4 py-2 text-sm font-medium text-red-700 dark:bg-red-500/10 dark:text-red-400">
+          <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-red-500" />
+          Recording…
         </div>
-      ) : (
+      ) : isSpeaking ? (
         <div className="flex items-center gap-2 rounded-full bg-green-100 px-4 py-2 text-sm font-medium text-green-700 dark:bg-green-500/10 dark:text-green-400">
           <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-green-500" />
           AI is speaking…
+        </div>
+      ) : (
+        <div className="flex items-center gap-2 rounded-full bg-blue-100 px-4 py-2 text-sm font-medium text-blue-700 dark:bg-blue-500/10 dark:text-blue-400">
+          <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-blue-500" />
+          AI is listening…
         </div>
       )}
 
@@ -44,7 +49,6 @@ const AiPreview = ({ question, isListening = false }) => {
           {question || "Preparing your question…"}
         </h2>
       </div>
-
     </section>
   );
 };

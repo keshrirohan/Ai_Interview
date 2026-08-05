@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useAuth } from "../context/AuthContext";
 
 /**
  * useCamera
@@ -18,7 +17,7 @@ const useCamera = () => {
 
   const [stream, setStream] = useState(null);
 
-  const {loading, setLoading} = useAuth(true);
+  const [loading, setLoading] = useState(true);
 
   const [error, setError] = useState("");
 
@@ -58,7 +57,7 @@ const useCamera = () => {
       setCameraEnabled(true);
       setMicEnabled(true);
     } catch (err) {
-      console.error(err);
+      console.error("[useCamera] error:", err);
 
       if (err.name === "NotAllowedError") {
         setError("Camera or microphone permission denied.");

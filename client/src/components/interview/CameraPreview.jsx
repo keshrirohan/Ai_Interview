@@ -1,18 +1,30 @@
 import { useEffect, useRef } from "react";
-import { Camera, CameraOff, Mic, MicOff } from "lucide-react";
+import {
+  Camera,
+  CameraOff,
+  Mic,
+  MicOff,
+  LoaderCircle,
+  Circle,
+  Bot,
+} from "lucide-react";
 
 const CameraPreview = ({
   stream,
   loading,
   error,
+
   cameraEnabled,
   micEnabled,
+
   toggleCamera,
   toggleMicrophone,
+
+  isRecording,
+  isSpeaking,
 }) => {
   const videoRef = useRef(null);
 
-  // Attach media stream to video
   useEffect(() => {
     if (!videoRef.current || !stream) return;
 
@@ -31,15 +43,41 @@ const CameraPreview = ({
           className="h-full w-full object-cover"
         />
       ) : (
-        <div className="flex h-full w-full items-center justify-center text-zinc-400">
-          {loading ? "Starting Camera..." : "Camera Not Available"}
+        <div className="flex flex-col items-center gap-3 text-zinc-400">
+          {loading ? (
+            <>
+              <LoaderCircle className="h-8 w-8 animate-spin" />
+              <p>Starting Camera...</p>
+            </>
+          ) : (
+            <>
+              <CameraOff className="h-10 w-10" />
+              <p>Camera Not Available</p>
+            </>
+          )}
         </div>
       )}
 
       {/* Error */}
       {error && (
-        <div className="absolute top-4 left-4 rounded-lg bg-red-600 px-3 py-2 text-sm text-white">
+        <div className="absolute left-4 top-4 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white">
           {error}
+        </div>
+      )}
+
+      {/* Recording Badge */}
+      {isRecording && (
+        <div className="absolute left-4 bottom-24 flex items-center gap-2 rounded-full bg-red-600 px-4 py-2 text-sm font-semibold text-white shadow-lg">
+          <Circle className="h-3 w-3 fill-white animate-pulse" />
+          Recording...
+        </div>
+      )}
+
+      {/* AI Speaking Badge */}
+      {isSpeaking && (
+        <div className="absolute right-4 bottom-24 flex items-center gap-2 rounded-full bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-lg">
+          <Bot className="h-4 w-4" />
+          AI Speaking...
         </div>
       )}
 
@@ -64,7 +102,8 @@ const CameraPreview = ({
         {/* Microphone */}
         <button
           onClick={toggleMicrophone}
-          className={`rounded-full p-3 transition ${
+          disabled={isRecording}
+          className={`rounded-full p-3 transition disabled:cursor-not-allowed disabled:opacity-50 ${
             micEnabled
               ? "bg-green-600 hover:bg-green-700"
               : "bg-red-600 hover:bg-red-700"

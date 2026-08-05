@@ -1,10 +1,10 @@
 /**
  * Interview.jsx
  *
- * Live interview session page.
+ * Live interview page.
  *
- * Pure presentation component.
- * All business logic is handled by useInterview(), useCamera(), and useRecorder().
+ * Pure Presentation Component.
+ * All interview logic lives inside useInterview().
  */
 
 import { useParams } from "react-router-dom";
@@ -12,7 +12,6 @@ import { useParams } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
 import useInterview from "../hooks/useInterview";
-import useCamera from "../hooks/useCamera";
 
 import LoadingScreen from "../components/common/LoadingScreen";
 
@@ -22,55 +21,34 @@ import InterviewControls from "../components/interview/InterviewControls";
 import AiPreview from "../components/interview/AiPreview";
 import CameraPreview from "../components/interview/CameraPreview";
 import TranscriptPanel from "../components/interview/TranscriptPanel";
-import useMediaRecorder from "../hooks/useMediaRecorder";
-import { uploadAudio } from "../services/speech.service";
 
 const Interview = () => {
   const { id: interviewId } = useParams();
+
   const { loading } = useAuth();
 
   const {
+    interview,
+    processing,
+    error,
+    question,
+    transcript,
+    currentQuestion,
+    totalQuestions,
     stream,
-    loading: cameraLoading,
-    error: cameraError,
+    cameraLoading,
+    cameraError,
     cameraEnabled,
     micEnabled,
     toggleCamera,
     toggleMicrophone,
-  } = useCamera();
-
-  const {
-    audioBlob,
     isRecording,
     isPaused,
+    isSpeaking,
     startRecording,
     stopRecording,
     pauseRecording,
     resumeRecording,
-    resetRecording,
-  } = useMediaRecorder(stream);
-  /**
-   * Camera + microphone stream
-   */
-
-  /**
-   * Media recorder
-   */
-
-  /**
-   * Interview business logic
-   */
-  const {
-    interview,
-    processing,
-    currentQuestion,
-    totalQuestions,
-    question,
-    transcript,
-    isListening,
-    error,
-    startListening,
-    stopListening,
     processCurrentAnswer,
     endInterview,
   } = useInterview(interviewId);
@@ -78,18 +56,6 @@ const Interview = () => {
   if (loading) {
     return <LoadingScreen />;
   }
-
-  const handleUpload = async () => {
-    if (!audioBlob) return;
-
-    try {
-      const data = await uploadAudio(audioBlob);
-
-      console.log(data);
-    } catch (err) {
-      console.error(err);
-    }
-  };
 
   const role = interview?.role || "Job Role";
   const difficulty = interview?.difficulty || "—";
@@ -110,38 +76,31 @@ const Interview = () => {
           />
 
           <InterviewControls
-            isListening={isListening}
+            isRecording={isRecording}
+            isPaused={isPaused}
+            isSpeaking={isSpeaking}
             processing={processing}
             transcript={transcript}
-            startListening={startListening}
-            stopListening={stopListening}
+            startRecording={startRecording}
+            stopRecording={stopRecording}
+            pauseRecording={pauseRecording}
+            resumeRecording={resumeRecording}
             processCurrentAnswer={processCurrentAnswer}
             endInterview={endInterview}
           />
         </div>
-
-        {/* Temporary Recording Test */}
-        <div className="mt-6 flex flex-wrap items-center gap-4 rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
-          <button onClick={startRecording}>Start</button>
-
-          <button onClick={pauseRecording}>Pause</button>
-
-          <button onClick={resumeRecording}>Resume</button>
-
-          <button onClick={stopRecording}>Stop</button>
-
-          <button onClick={resetRecording}>Reset</button>
-          <button onClick={handleUpload}>Upload Audio</button>
-
-          {audioBlob && <audio controls src={URL.createObjectURL(audioBlob)} />}
-        </div>
-
         {/* AI + Camera */}
         <div className="mt-8 grid gap-6 lg:grid-cols-2">
+          {/* AI Preview */}
           <div className="overflow-hidden rounded-2xl border border-zinc-200 shadow-sm dark:border-zinc-800">
-            <AiPreview question={question} isListening={isListening} />
+            <AiPreview
+              question={question}
+              isRecording={isRecording}
+              isSpeaking={isSpeaking}
+            />
           </div>
 
+          {/* Camera Preview */}
           <div className="overflow-hidden rounded-2xl border border-zinc-200 shadow-sm dark:border-zinc-800">
             <CameraPreview
               stream={stream}
@@ -151,12 +110,16 @@ const Interview = () => {
               micEnabled={micEnabled}
               toggleCamera={toggleCamera}
               toggleMicrophone={toggleMicrophone}
+              isRecording={isRecording}
+              isSpeaking={isSpeaking}
             />
           </div>
         </div>
 
-        {/* Transcript */}
-        <TranscriptPanel transcript={transcript} isListening={isListening} />
+        {/* Live Transcript */}
+        <div className="mt-8">
+          <TranscriptPanel transcript={transcript} isRecording={isRecording} />
+        </div>
       </div>
     </div>
   );

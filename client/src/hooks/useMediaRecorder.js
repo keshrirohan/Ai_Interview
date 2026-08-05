@@ -4,16 +4,28 @@ import { useCallback, useRef, useState } from "react";
  * useMediaRecorder
  *
  * Responsibilities:
+ * -----------------
  * - Record microphone audio
  * - Pause / Resume recording
- * - Stop recording
- * - Return audio Blob
+ * - Stop recording and return Blob
  * - Reset recording
+ * - Handle MediaRecorder lifecycle
  */
 
 const useMediaRecorder = (stream) => {
+  /* -------------------------------------------------------------------------- */
+  /*                                   Refs                                     */
+  /* -------------------------------------------------------------------------- */
+
   const recorderRef = useRef(null);
+
   const chunksRef = useRef([]);
+
+  const mimeTypeRef = useRef("");
+
+  /* -------------------------------------------------------------------------- */
+  /*                                   State                                    */
+  /* -------------------------------------------------------------------------- */
 
   const [audioBlob, setAudioBlob] = useState(null);
 
@@ -23,101 +35,175 @@ const useMediaRecorder = (stream) => {
 
   const [error, setError] = useState("");
 
-  /**
-   * Start Recording
-   */
+  /* -------------------------------------------------------------------------- */
+  /*                              MIME Type Helper                              */
+  /* -------------------------------------------------------------------------- */
+
+  const getSupportedMimeType = () => {
+    const types = [
+      "audio/webm;codecs=opus",
+      "audio/webm",
+      "audio/mp4",
+      "audio/ogg",
+    ];
+
+    for (const type of types) {
+      if (MediaRecorder.isTypeSupported(type)) {
+        return type;
+      }
+    }
+
+    return "";
+  };
+
+  /* -------------------------------------------------------------------------- */
+  /*                              Start Recording                               */
+  /* -------------------------------------------------------------------------- */
+
   const startRecording = useCallback(() => {
     if (!stream) {
-      setError("No media stream available.");
+      setError("Media stream not available.");
       return;
     }
 
     try {
       chunksRef.current = [];
 
-      const recorder = new MediaRecorder(stream);
+      const mimeType = getSupportedMimeType();
+
+      mimeTypeRef.current = mimeType;
+
+      const recorder = mimeType
+        ? new MediaRecorder(stream, { mimeType })
+        : new MediaRecorder(stream);
 
       recorderRef.current = recorder;
 
+      recorder.onstart = () => {
+        console.log("🎙 Recording Started");
+      };
+
       recorder.ondataavailable = (event) => {
-        if (event.data.size > 0) {
+        if (event.data && event.data.size > 0) {
           chunksRef.current.push(event.data);
         }
       };
 
-      recorder.onstop = () => {
-        const blob = new Blob(chunksRef.current, {
-          type: "audio/webm",
-        });
-
-        setAudioBlob(blob);
-
-        chunksRef.current = [];
-      };
-
       recorder.onerror = (event) => {
-        console.error(event);
+        console.error("Recorder Error:", event);
+
         setError("Recording failed.");
       };
 
       recorder.start();
 
+      setAudioBlob(null);
+
       setIsRecording(true);
+
       setIsPaused(false);
+
       setError("");
     } catch (err) {
       console.error(err);
+
       setError(err.message);
     }
   }, [stream]);
 
-  /**
-   * Stop Recording
-   */
+  /* -------------------------------------------------------------------------- */
+  /*                               Stop Recording                               */
+  /* -------------------------------------------------------------------------- */
+
   const stopRecording = useCallback(() => {
-    if (!recorderRef.current) return;
+    return new Promise((resolve, reject) => {
+      const recorder = recorderRef.current;
 
-    if (recorderRef.current.state !== "inactive") {
-      recorderRef.current.stop();
-    }
+      if (!recorder) {
+        resolve(null);
+        return;
+      }
 
-    setIsRecording(false);
-    setIsPaused(false);
-  }, []);
+      if (recorder.state === "inactive") {
+        resolve(audioBlob);
+        return;
+      }
 
-  /**
-   * Pause Recording
-   */
+      recorder.onstop = () => {
+        try {
+          const blob = new Blob(chunksRef.current, {
+            type: mimeTypeRef.current || "audio/webm",
+          });
+
+          setAudioBlob(blob);
+
+          chunksRef.current = [];
+
+          setIsRecording(false);
+          setIsPaused(false);
+
+          console.log("✅ Recording Finished");
+          console.log("Blob Size:", blob.size);
+
+          resolve(blob);
+        } catch (err) {
+          reject(err);
+        }
+      };
+
+      recorder.stop();
+    });
+  }, [audioBlob]);
+
+  /* -------------------------------------------------------------------------- */
+  /*                              Pause Recording                               */
+  /* -------------------------------------------------------------------------- */
+
   const pauseRecording = useCallback(() => {
-    if (!recorderRef.current) return;
+    const recorder = recorderRef.current;
 
-    if (recorderRef.current.state === "recording") {
-      recorderRef.current.pause();
+    if (!recorder) return;
 
+    if (recorder.state === "recording") {
+      recorder.pause();
       setIsPaused(true);
     }
   }, []);
 
-  /**
-   * Resume Recording
-   */
+  /* -------------------------------------------------------------------------- */
+  /*                              Resume Recording                              */
+  /* -------------------------------------------------------------------------- */
+
   const resumeRecording = useCallback(() => {
-    if (!recorderRef.current) return;
+    const recorder = recorderRef.current;
 
-    if (recorderRef.current.state === "paused") {
-      recorderRef.current.resume();
+    if (!recorder) return;
 
+    if (recorder.state === "paused") {
+      recorder.resume();
       setIsPaused(false);
     }
   }, []);
 
-  /**
-   * Clear Recording
-   */
-  const resetRecording = () => {
-    setAudioBlob(null);
+  /* -------------------------------------------------------------------------- */
+  /*                               Reset Recording                              */
+  /* -------------------------------------------------------------------------- */
+
+  const resetRecording = useCallback(() => {
     chunksRef.current = [];
-  };
+
+    setAudioBlob(null);
+
+    setIsRecording(false);
+
+    setIsPaused(false);
+
+    setError("");
+  }, []);
+
+  /* -------------------------------------------------------------------------- */
+  /*                                   Return                                   */
+  /* -------------------------------------------------------------------------- */
 
   return {
     audioBlob,

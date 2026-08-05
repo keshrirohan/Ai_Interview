@@ -23,12 +23,16 @@ const storage = multer.diskStorage({
   },
 });
 
-// Accept only audio files
+// Accept audio and webm recordings
 const fileFilter = (req, file, cb) => {
-  if (file.mimetype.startsWith("audio/")) {
+  if (
+    file.mimetype.startsWith("audio/") ||
+    file.mimetype.startsWith("video/") ||
+    file.mimetype === "application/octet-stream"
+  ) {
     cb(null, true);
   } else {
-    cb(new Error("Only audio files are allowed"), false);
+    cb(new Error("Only audio recordings are allowed"), false);
   }
 };
 

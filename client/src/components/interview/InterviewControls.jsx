@@ -1,61 +1,111 @@
 /**
  * InterviewControls.jsx
  *
- * The three action buttons for the interview session:
- *   Pause / Resume  — toggles the microphone on/off
- *   Submit Answer   — sends the transcript to the server and advances
- *   End Interview   — stops everything and navigates away
+ * Interview action controls.
  *
- * All actions are passed in as props from Interview.jsx (which gets them
- * from useInterview). This component contains zero business logic.
+ * Pure UI component.
+ * No business logic.
  *
  * Props:
- *   isListening        {boolean}  — true while mic is recording
- *   processing         {boolean}  — true while /process API call is in-flight
- *   transcript         {string}   — current transcript text
- *   startListening     {Function} — open the microphone
- *   stopListening      {Function} — close the microphone
- *   processCurrentAnswer {Function} — submit answer and get next question
- *   endInterview       {Function} — stop everything and navigate away
+ *  isRecording
+ *  isPaused
+ *  isSpeaking
+ *  processing
+ *
+ *  startRecording
+ *  stopRecording
+ *  pauseRecording
+ *  resumeRecording
+ *
+ *  processCurrentAnswer
+ *  endInterview
  */
 
-import { Mic, MicOff, Square } from "lucide-react";
+import { Mic, Pause, Play, Send, Square, LoaderCircle } from "lucide-react";
 
 const InterviewControls = ({
-  isListening,
+  isRecording,
+  isPaused,
+  isSpeaking,
   processing,
-  transcript,
-  startListening,
-  stopListening,
+
+  startRecording,
+  stopRecording,
+  pauseRecording,
+  resumeRecording,
+
   processCurrentAnswer,
   endInterview,
 }) => {
   return (
     <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
+      {/* Start Recording */}
+      {!isRecording && !processing && !isSpeaking && (
+        <button
+          onClick={startRecording}
+          className="flex items-center gap-2 rounded-xl bg-green-600 px-6 py-3 font-semibold text-white transition hover:bg-green-700"
+        >
+          <Mic size={18} />
+          Start Recording
+        </button>
+      )}
 
-      {/* Pause / Resume — toggles the microphone */}
+      {/* Pause */}
+      {isRecording && !isPaused && (
+        <button
+          onClick={pauseRecording}
+          disabled={processing}
+          className="flex items-center gap-2 rounded-xl bg-yellow-500 px-6 py-3 font-semibold text-white transition hover:bg-yellow-600 disabled:opacity-50"
+        >
+          <Pause size={18} />
+          Pause
+        </button>
+      )}
+
+      {/* Resume */}
+      {isRecording && isPaused && (
+        <button
+          onClick={resumeRecording}
+          disabled={processing}
+          className="flex items-center gap-2 rounded-xl bg-green-600 px-6 py-3 font-semibold text-white transition hover:bg-green-700 disabled:opacity-50"
+        >
+          <Play size={18} />
+          Resume
+        </button>
+      )}
+
+      {/* Stop */}
+      {isRecording && (
+        <button
+          onClick={stopRecording}
+          disabled={processing}
+          className="flex items-center gap-2 rounded-xl bg-zinc-800 px-6 py-3 font-semibold text-white transition hover:bg-zinc-700 disabled:opacity-50"
+        >
+          <Square size={18} />
+          Stop Recording
+        </button>
+      )}
+
+      {/* Submit */}
       <button
-        onClick={isListening ? stopListening : startListening}
-        disabled={processing}
-        className="flex items-center gap-2 rounded-xl bg-zinc-900 px-6 py-3 font-semibold text-white transition hover:bg-zinc-800 disabled:opacity-50 dark:bg-zinc-700 dark:hover:bg-zinc-600"
+        onClick={processCurrentAnswer}
+        disabled={processing || isSpeaking}
+        className="flex items-center gap-2 rounded-xl bg-blue-600 px-6 py-3 font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
       >
-        {isListening ? (
-          <><MicOff size={18} /> Pause</>
+        {processing ? (
+          <>
+            <LoaderCircle size={18} className="animate-spin" />
+            Processing...
+          </>
         ) : (
-          <><Mic size={18} /> Resume</>
+          <>
+            <Send size={18} />
+            Submit Answer
+          </>
         )}
       </button>
 
-      {/* Submit answer — disabled when transcript is empty or a request is in-flight */}
-      <button
-        onClick={processCurrentAnswer}
-        disabled={processing || !transcript.trim()}
-        className="flex items-center gap-2 rounded-xl bg-blue-600 px-6 py-3 font-semibold text-white transition hover:bg-blue-700 disabled:opacity-50"
-      >
-        {processing ? "Processing…" : "Submit Answer"}
-      </button>
-
-      {/* End interview — disabled while a request is processing to avoid race conditions */}
+      {/* End Interview */}
       <button
         onClick={endInterview}
         disabled={processing}

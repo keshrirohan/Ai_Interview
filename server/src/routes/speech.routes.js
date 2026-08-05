@@ -1,5 +1,6 @@
 import express from "express";
 import upload from "../middlewares/upload.middleware.js";
+import authMiddleware from "../middlewares/auth.middleware.js";
 import { transcribeAudio } from "../controller/speech.controller.js";
 
 const router = express.Router();
@@ -9,6 +10,6 @@ const router = express.Router();
  *
  * Upload recorded audio
  */
-router.post("/transcribe", upload.single("audio"), transcribeAudio);
+router.post("/transcribe", authMiddleware, upload.single("audio"), transcribeAudio);
 
 export default router;

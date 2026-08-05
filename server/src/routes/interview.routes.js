@@ -92,6 +92,4 @@ router.post(
   processInterviewController,
 );
 
-router.post("/transcribe", authMiddleware);
-
 export default router;
