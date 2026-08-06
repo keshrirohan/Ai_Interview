@@ -54,7 +54,7 @@ export const speak = (text, onEnd) => {
 
   const utterance = new SpeechSynthesisUtterance(text);
   utterance.lang   = "en-US";
-  utterance.rate   = 1;
+  utterance.rate   = 0.88; // Slightly slower reading speed for enhanced clarity
   utterance.pitch  = 1;
   utterance.volume = 1;
 
