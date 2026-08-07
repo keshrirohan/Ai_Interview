@@ -82,7 +82,7 @@ const useCamera = () => {
     streamRef.current = null;
     setStream(null);
   }, []);
-
+  
   /**
    * Toggle camera
    */

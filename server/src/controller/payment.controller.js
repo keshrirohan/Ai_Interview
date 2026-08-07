@@ -18,7 +18,8 @@ export const createOrderController = async (req, res) => {
     });
   } catch (error) {
     console.error("[Payment] createOrder error:", error);
-    res.status(500).json({
+    const isValidationError = error.message.includes("Downgrade") || error.message.includes("Invalid");
+    res.status(isValidationError ? 400 : 500).json({
       success: false,
       message: error.message || "Failed to create payment order.",
     });
@@ -37,7 +38,8 @@ export const verifyPaymentController = async (req, res) => {
     });
   } catch (error) {
     console.error("[Payment] verifyPayment error:", error);
-    res.status(500).json({
+    const isValidationError = error.message.includes("downgrade") || error.message.includes("verification failed");
+    res.status(isValidationError ? 400 : 500).json({
       success: false,
       message: error.message || "Payment verification failed.",
     });

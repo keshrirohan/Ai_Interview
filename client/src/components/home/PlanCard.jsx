@@ -1,5 +1,11 @@
 import { Check } from "lucide-react";
 
+const PLAN_RANKS = {
+  FREE: 0,
+  GOLD: 1,
+  PLATINUM: 2,
+};
+
 const PlanCard = ({
   title,
   planKey,
@@ -7,10 +13,15 @@ const PlanCard = ({
   duration,
   features,
   popular = false,
-  currentPlan,
+  currentPlan = "FREE",
   onSelect,
 }) => {
-  const isCurrent = currentPlan === planKey;
+  const userRank = PLAN_RANKS[currentPlan] ?? 0;
+  const cardRank = PLAN_RANKS[planKey] ?? 0;
+
+  const isCurrent = cardRank === userRank;
+  const isLowerTier = cardRank < userRank;
+  const isUpgradeable = cardRank > userRank;
 
   return (
     <div
@@ -33,7 +44,7 @@ const PlanCard = ({
         <h2 className="text-2xl font-bold">{title}</h2>
         {isCurrent && (
           <span className="rounded-full bg-emerald-500/20 px-3 py-1 text-xs font-bold text-emerald-400">
-            Current Plan
+            Active Plan
           </span>
         )}
       </div>
@@ -74,7 +85,7 @@ const PlanCard = ({
       {/* Action Button */}
       <button
         onClick={onSelect}
-        disabled={isCurrent}
+        disabled={!isUpgradeable}
         className={`mt-10 w-full rounded-xl py-3.5 font-semibold transition duration-300 disabled:opacity-60 disabled:cursor-not-allowed
         ${
           popular
@@ -84,8 +95,8 @@ const PlanCard = ({
       >
         {isCurrent
           ? "Active Plan"
-          : planKey === "FREE"
-          ? "Current Plan"
+          : isLowerTier
+          ? "Included in Your Plan"
           : `Upgrade to ${title}`}
       </button>
     </div>

@@ -31,6 +31,20 @@ const PaymentModal = ({ planName = "GOLD", isOpen, onClose, onSuccess }) => {
   const validPlan = planName.toUpperCase() === "PLATINUM" ? "PLATINUM" : "GOLD";
   const amount = validPlan === "PLATINUM" ? 999 : 499;
 
+  const loadRazorpayScript = () => {
+    return new Promise((resolve) => {
+      if (window.Razorpay) {
+        resolve(true);
+        return;
+      }
+      const script = document.createElement("script");
+      script.src = "https://checkout.razorpay.com/v1/checkout.js";
+      script.onload = () => resolve(true);
+      script.onerror = () => resolve(false);
+      document.body.appendChild(script);
+    });
+  };
+
   const handlePaymentSubmit = async (e) => {
     e.preventDefault();
     try {
@@ -53,21 +67,63 @@ const PaymentModal = ({ planName = "GOLD", isOpen, onClose, onSuccess }) => {
         throw new Error(orderJson.message || "Failed to create payment order.");
       }
 
-      const { orderId } = orderJson.data;
+      const { orderId, keyId, amount: orderAmount } = orderJson.data;
 
-      // 2. Verify & Process Payment
+      // If user selected Razorpay Express Popup and key is configured
+      if (method === "razorpay" && keyId && keyId !== "rzp_test_echohire") {
+        const loaded = await loadRazorpayScript();
+        if (loaded && window.Razorpay) {
+          const options = {
+            key: keyId,
+            amount: orderAmount * 100,
+            currency: "INR",
+            name: "EchoHire AI",
+            description: `Upgrade to ${validPlan} Plan`,
+            order_id: orderId,
+            handler: async function (rzpResponse) {
+              await verifyAndCompletePayment({
+                orderId: rzpResponse.razorpay_order_id || orderId,
+                paymentId: rzpResponse.razorpay_payment_id,
+                signature: rzpResponse.razorpay_signature,
+                plan: validPlan,
+                amount,
+              });
+            },
+            modal: {
+              ondismiss: function () {
+                setLoading(false);
+              },
+            },
+            theme: { color: "#2563eb" },
+          };
+          const rzp = new window.Razorpay(options);
+          rzp.open();
+          return;
+        }
+      }
+
+      // Standard Card / UPI or Simulated Payment Verification
+      await verifyAndCompletePayment({
+        orderId,
+        paymentId: `pay_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+        plan: validPlan,
+        amount,
+      });
+    } catch (err) {
+      setError(err.message || "Payment processing failed. Please try again.");
+      setLoading(false);
+    }
+  };
+
+  const verifyAndCompletePayment = async (payload) => {
+    try {
       const verifyRes = await fetch(
         `${import.meta.env.VITE_BACKEND_URL}/api/payment/verify`,
         {
           method: "POST",
           credentials: "include",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            orderId,
-            paymentId: `pay_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
-            plan: validPlan,
-            amount,
-          }),
+          body: JSON.stringify(payload),
         }
       );
 
@@ -84,7 +140,7 @@ const PaymentModal = ({ planName = "GOLD", isOpen, onClose, onSuccess }) => {
         window.location.reload(); // Refresh session data & unlock model answers
       }, 1200);
     } catch (err) {
-      setError(err.message || "Payment processing failed. Please try again.");
+      setError(err.message || "Payment verification failed.");
     } finally {
       setLoading(false);
     }

@@ -398,7 +398,15 @@ const Profile = () => {
                     onClick={() => setPaymentModalPlan("GOLD")}
                     className="flex items-center gap-1 rounded-full bg-gradient-to-r from-amber-500 to-yellow-400 px-3.5 py-1 text-xs font-bold text-black shadow-sm transition hover:scale-105"
                   >
-                    <Zap size={13} /> Upgrade Plan
+                    <Zap size={13} /> Upgrade to Gold
+                  </button>
+                )}
+                {stats.plan === "GOLD" && (
+                  <button
+                    onClick={() => setPaymentModalPlan("PLATINUM")}
+                    className="flex items-center gap-1 rounded-full bg-gradient-to-r from-purple-600 to-indigo-500 px-3.5 py-1 text-xs font-bold text-white shadow-sm transition hover:scale-105"
+                  >
+                    <Zap size={13} /> Upgrade to Platinum
                   </button>
                 )}
               </div>
