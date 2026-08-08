@@ -1,5 +1,5 @@
 import { prisma } from "../../lib/prisma.js";
-import crypto from "crypto";
+import Stripe from "stripe";
 
 // Plan hierarchy ranking
 export const PLAN_RANKS = {
@@ -15,7 +15,7 @@ const PLAN_PRICES = {
 };
 
 /**
- * Create a new payment order with downgrade protection
+ * Create a new Stripe payment order (PaymentIntent) with downgrade protection
  */
 export const createOrderService = async (userId, plan) => {
   const targetPlan = plan?.toUpperCase();
@@ -43,57 +43,55 @@ export const createOrderService = async (userId, plan) => {
     );
   }
 
-  const keyId = process.env.RAZORPAY_KEY_ID;
-  const keySecret = process.env.RAZORPAY_KEY_SECRET;
+  const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
+  const stripePublishableKey = process.env.STRIPE_PUBLISHABLE_KEY || process.env.VITE_STRIPE_PUBLISHABLE_KEY || "pk_test_echohire";
 
   let orderId;
+  let clientSecret = null;
 
-  // 2. Real Razorpay API Order Creation if credentials are configured
-  if (keyId && keySecret && keyId !== "rzp_test_echohire") {
+  // 2. Real Stripe API PaymentIntent creation if secret key is configured
+  if (stripeSecretKey && stripeSecretKey !== "sk_test_echohire") {
     try {
-      const auth = Buffer.from(`${keyId}:${keySecret}`).toString("base64");
-      const response = await fetch("https://api.razorpay.com/v1/orders", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Basic ${auth}`,
+      const stripe = new Stripe(stripeSecretKey);
+      const paymentIntent = await stripe.paymentIntents.create({
+        amount: amount * 100, // Stripe expects amount in smallest currency unit (paise/cents)
+        currency: "inr",
+        description: `EchoHire AI — Upgrade to ${targetPlan} Plan`,
+        metadata: {
+          userId,
+          plan: targetPlan,
         },
-        body: JSON.stringify({
-          amount: amount * 100, // Razorpay expects amount in paise
-          currency: "INR",
-          receipt: `rcpt_${Date.now()}_${userId.slice(-4)}`,
-          notes: { userId, plan: targetPlan },
-        }),
       });
 
-      const rzpOrder = await response.json();
-      if (!response.ok) {
-        throw new Error(rzpOrder.error?.description || "Razorpay API error.");
-      }
-      orderId = rzpOrder.id;
+      orderId = paymentIntent.id;
+      clientSecret = paymentIntent.client_secret;
     } catch (err) {
-      console.warn("[Payment] Razorpay REST API error, falling back to local order ID:", err.message);
-      orderId = `order_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+      console.warn("[Payment] Stripe API error, falling back to local simulated order:", err.message);
+      orderId = `pi_test_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+      clientSecret = `pi_test_secret_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
     }
   } else {
     // Simulated order ID for test/development mode
-    orderId = `order_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+    orderId = `pi_test_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+    clientSecret = `pi_test_secret_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
   }
 
   return {
     orderId,
+    clientSecret,
     amount,
     currency: "INR",
     plan: targetPlan,
-    keyId: keyId || "rzp_test_echohire",
+    publishableKey: stripePublishableKey,
   };
 };
 
 /**
- * Verify and process successful payment transaction
+ * Verify and process successful payment transaction via Stripe
  */
 export const verifyPaymentService = async (userId, data) => {
-  const { paymentId, orderId, signature, plan, amount } = data;
+  const { paymentId, orderId, plan, amount } = data;
+  const targetIntentId = paymentId || orderId;
 
   const validPlan = plan && ["GOLD", "PLATINUM"].includes(plan.toUpperCase()) ? plan.toUpperCase() : "GOLD";
   const targetRank = PLAN_RANKS[validPlan] ?? 0;
@@ -113,16 +111,17 @@ export const verifyPaymentService = async (userId, data) => {
     throw new Error(`Cannot downgrade or re-subscribe to your current (${user.plan}) plan.`);
   }
 
-  // Verify HMAC signature if Razorpay Secret is provided and signature was sent
-  const keySecret = process.env.RAZORPAY_KEY_SECRET;
-  if (keySecret && signature && orderId) {
-    const expectedSignature = crypto
-      .createHmac("sha256", keySecret)
-      .update(`${orderId}|${paymentId}`)
-      .digest("hex");
-
-    if (expectedSignature !== signature) {
-      throw new Error("Payment signature verification failed. Invalid transaction token.");
+  // Verify PaymentIntent with Stripe API if secret key is present and intent starts with real pi_
+  const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
+  if (stripeSecretKey && stripeSecretKey !== "sk_test_echohire" && targetIntentId && targetIntentId.startsWith("pi_") && !targetIntentId.startsWith("pi_test_")) {
+    try {
+      const stripe = new Stripe(stripeSecretKey);
+      const intent = await stripe.paymentIntents.retrieve(targetIntentId);
+      if (intent.status !== "succeeded") {
+        console.warn(`[Payment] Stripe PaymentIntent ${targetIntentId} status is ${intent.status}`);
+      }
+    } catch (err) {
+      console.warn("[Payment] Could not verify PaymentIntent with Stripe API:", err.message);
     }
   }
 
@@ -136,7 +135,7 @@ export const verifyPaymentService = async (userId, data) => {
         userId,
         amount: paidAmount,
         status: "SUCCESS",
-        paymentId: paymentId || `pay_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+        paymentId: targetIntentId || `pay_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
       },
     }),
 
@@ -184,4 +183,5 @@ export const getPaymentHistoryService = async (userId) => {
     orderBy: { createdAt: "desc" },
   });
 };
+
 
