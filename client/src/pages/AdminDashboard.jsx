@@ -38,12 +38,17 @@ const AdminDashboard = () => {
   const [interviews, setInterviews] = useState([]);
   const [payments, setPayments] = useState([]);
 
+  const getAuthHeaders = () => {
+    const token = localStorage.getItem("token");
+    return token ? { Authorization: `Bearer ${token}` } : {};
+  };
+
   // Fetch Overview Data
   const fetchOverview = async () => {
     try {
       const res = await fetch(
         `${import.meta.env.VITE_BACKEND_URL}/api/admin/overview`,
-        { credentials: "include" }
+        { credentials: "include", headers: getAuthHeaders() }
       );
       const json = await res.json();
       if (!res.ok || !json.success) throw new Error(json.message);
@@ -58,7 +63,7 @@ const AdminDashboard = () => {
     try {
       const res = await fetch(
         `${import.meta.env.VITE_BACKEND_URL}/api/admin/users?search=${encodeURIComponent(userSearch)}`,
-        { credentials: "include" }
+        { credentials: "include", headers: getAuthHeaders() }
       );
       const json = await res.json();
       if (json.success) setUsers(json.data);
@@ -72,7 +77,7 @@ const AdminDashboard = () => {
     try {
       const res = await fetch(
         `${import.meta.env.VITE_BACKEND_URL}/api/admin/contacts`,
-        { credentials: "include" }
+        { credentials: "include", headers: getAuthHeaders() }
       );
       const json = await res.json();
       if (json.success) setContacts(json.data);
@@ -86,7 +91,7 @@ const AdminDashboard = () => {
     try {
       const res = await fetch(
         `${import.meta.env.VITE_BACKEND_URL}/api/admin/interviews`,
-        { credentials: "include" }
+        { credentials: "include", headers: getAuthHeaders() }
       );
       const json = await res.json();
       if (json.success) setInterviews(json.data);
@@ -100,7 +105,7 @@ const AdminDashboard = () => {
     try {
       const res = await fetch(
         `${import.meta.env.VITE_BACKEND_URL}/api/admin/payments`,
-        { credentials: "include" }
+        { credentials: "include", headers: getAuthHeaders() }
       );
       const json = await res.json();
       if (json.success) setPayments(json.data);

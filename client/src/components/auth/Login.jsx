@@ -45,7 +45,7 @@ const Login = ({ openSignup, openForgot, closeModal }) => {
         return;
       }
 
-      login(data.user);
+      login(data.user, data.token);
       successToast("Login successful!");
       closeModal();
     } catch (error) {

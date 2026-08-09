@@ -50,12 +50,16 @@ const NewInterview = () => {
 
     try {
       setIsGenerating(true);
+      const token = localStorage.getItem("token");
       const response = await fetch(
         `${import.meta.env.VITE_BACKEND_URL}/api/interview/start`,
         {
           method: "POST",
           credentials: "include",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
           body: JSON.stringify(formData),
         },
       );

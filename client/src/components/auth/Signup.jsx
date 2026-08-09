@@ -60,7 +60,7 @@ const Signup = ({ openLogin, closeModal }) => {
       }
 
       if (data.user) {
-        login(data.user);
+        login(data.user, data.token);
       }
       successToast("Account created successfully!");
       closeModal();

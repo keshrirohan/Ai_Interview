@@ -19,11 +19,12 @@ import jwt from "jsonwebtoken";
 const router = express.Router();
 
 // ─── Shared cookie options ────────────────────────────────────────────────────
+const isProd = process.env.NODE_ENV === "production";
 const COOKIE_OPTIONS = {
-  httpOnly: true,                                                         // not accessible via JS
-  secure: process.env.NODE_ENV === "production",                         // HTTPS only in prod
-  sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",     // works cross-origin in dev
-  maxAge: 7 * 24 * 60 * 60 * 1000,                                     // 7 days in ms
+  httpOnly: true,
+  secure: isProd,                                                        // HTTPS in prod
+  sameSite: isProd ? "none" : "lax",                                    // cross-origin in prod
+  maxAge: 7 * 24 * 60 * 60 * 1000,                                      // 7 days
 };
 
 // ─── POST /login ──────────────────────────────────────────────────────────────
@@ -62,12 +63,13 @@ router.post("/login", async (req, res) => {
       expiresIn: "7d",
     });
 
-    // Set token in an httpOnly cookie — never expose it in the response body
+    // Set HTTP-only cookie
     res.cookie("token", token, COOKIE_OPTIONS);
 
     return res.status(200).json({
       success: true,
       message: "Login successful",
+      token, // Expose token for Authorization header fallback in browsers blocking 3rd-party cookies
       user: {
         id: user.id,
         name: user.name,
@@ -133,6 +135,7 @@ router.post("/register", async (req, res) => {
     return res.status(201).json({
       success: true,
       message: "Account created successfully.",
+      token,
       user: {
         id: newUser.id,
         name: newUser.name,
@@ -149,7 +152,9 @@ router.post("/register", async (req, res) => {
 
 // ─── GET /me ──────────────────────────────────────────────────────────────────
 router.get("/me", async (req, res) => {
-  const token = req.cookies.token;
+  const token =
+    req.cookies?.token ||
+    req.headers.authorization?.replace(/^Bearer\s+/i, "");
 
   if (!token) {
     return res.status(401).json({

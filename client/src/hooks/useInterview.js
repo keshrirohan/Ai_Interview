@@ -96,9 +96,12 @@ const useInterview = (interviewId) => {
         setLoading(true);
         setError(null);
 
+        const token = localStorage.getItem("token");
+        const headers = token ? { Authorization: `Bearer ${token}` } : {};
+
         const res = await fetch(
           `${import.meta.env.VITE_BACKEND_URL}/api/interview/${interviewId}`,
-          { credentials: "include", signal: controller.signal },
+          { credentials: "include", headers, signal: controller.signal },
         );
 
         const json = await res.json();
@@ -135,12 +138,16 @@ const useInterview = (interviewId) => {
 
     const initFirstQuestion = async () => {
       try {
+        const token = localStorage.getItem("token");
         const res = await fetch(
           `${import.meta.env.VITE_BACKEND_URL}/api/interview/${interviewId}/question`,
           {
             method: "POST",
             credentials: "include",
-            headers: { "Content-Type": "application/json" },
+            headers: {
+              "Content-Type": "application/json",
+              ...(token ? { Authorization: `Bearer ${token}` } : {}),
+            },
             body: JSON.stringify(interview),
             signal: controller.signal,
           },
@@ -219,12 +226,16 @@ const useInterview = (interviewId) => {
 
       setTranscript(result.transcript);
 
+      const token = localStorage.getItem("token");
       const res = await fetch(
         `${import.meta.env.VITE_BACKEND_URL}/api/interview/${interviewId}/process`,
         {
           method: "POST",
           credentials: "include",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
           body: JSON.stringify({ answer: result.transcript }),
         },
       );

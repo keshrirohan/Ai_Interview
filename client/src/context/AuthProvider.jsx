@@ -25,26 +25,36 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Restore session from the httpOnly cookie on every page load
+  // Restore session from httpOnly cookie or stored JWT token on every page load
   useEffect(() => {
     const controller = new AbortController();
 
     const restoreSession = async () => {
       try {
+        const storedToken = localStorage.getItem("token");
+        const headers = storedToken
+          ? { Authorization: `Bearer ${storedToken}` }
+          : {};
+
         const res = await fetch(
           `${import.meta.env.VITE_BACKEND_URL}/api/auth/me`,
-          { credentials: "include", signal: controller.signal },
+          {
+            credentials: "include",
+            headers,
+            signal: controller.signal,
+          },
         );
 
         const data = await res.json();
 
         if (data.success) {
           setUser(data.user);
+        } else {
+          // If session restore fails, clear invalid token
+          localStorage.removeItem("token");
         }
       } catch (err) {
-        // AbortError means the component unmounted — safe to ignore
         if (err.name === "AbortError") return;
-        // Any other error means unauthenticated — user stays null
       } finally {
         setLoading(false);
       }
@@ -55,8 +65,17 @@ export const AuthProvider = ({ children }) => {
     return () => controller.abort();
   }, []);
 
-  const login = (userData) => setUser(userData);
-  const logout = () => setUser(null);
+  const login = (userData, token) => {
+    setUser(userData);
+    if (token) {
+      localStorage.setItem("token", token);
+    }
+  };
+
+  const logout = () => {
+    setUser(null);
+    localStorage.removeItem("token");
+  };
 
   return (
     <AuthContext.Provider value={{ user, login, logout, loading, setLoading }}>

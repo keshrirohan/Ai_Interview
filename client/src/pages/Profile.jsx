@@ -285,9 +285,11 @@ const Profile = () => {
       try {
         setLoading(true);
         setError(null);
+        const token = localStorage.getItem("token");
+        const headers = token ? { Authorization: `Bearer ${token}` } : {};
         const res = await fetch(
           `${import.meta.env.VITE_BACKEND_URL}/api/dashboard`,
-          { credentials: "include" }
+          { credentials: "include", headers }
         );
         const json = await res.json();
         if (!res.ok || !json.success) {
