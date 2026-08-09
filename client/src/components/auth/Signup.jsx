@@ -15,14 +15,18 @@
  */
 
 import { useState } from "react";
+import { useAuth } from "../../context/AuthContext";
 import { errorToast, successToast } from "../../utils/toast";
+import { LoaderCircle } from "lucide-react";
 
 const Signup = ({ openLogin, closeModal }) => {
+  const { login } = useAuth();
   const [formData, setFormData] = useState({
     name:     "",
     email:    "",
     password: "",
   });
+  const [loading, setLoading] = useState(false);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -32,28 +36,38 @@ const Signup = ({ openLogin, closeModal }) => {
     e.preventDefault();
 
     try {
+      setLoading(true);
+      const payload = {
+        ...formData,
+        email: formData.email.trim().toLowerCase(),
+      };
+
       const response = await fetch(
         `${import.meta.env.VITE_BACKEND_URL}/api/auth/register`,
         {
           method: "POST",
           credentials: "include",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(formData),
+          body: JSON.stringify(payload),
         },
       );
 
       const data = await response.json();
 
-      // Check success BEFORE showing any toast or closing the modal
       if (!data.success) {
         errorToast(data.message || "Signup failed. Please try again.");
         return;
       }
 
+      if (data.user) {
+        login(data.user);
+      }
       successToast("Account created successfully!");
       closeModal();
     } catch (error) {
       errorToast(error.message || "Something went wrong. Please try again.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -124,9 +138,17 @@ const Signup = ({ openLogin, closeModal }) => {
 
         <button
           type="submit"
-          className="w-full rounded-lg bg-blue-600 py-3 text-sm font-semibold text-white transition-all duration-300 hover:bg-blue-700 active:scale-95"
+          disabled={loading}
+          className="flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 py-3 text-sm font-semibold text-white transition-all duration-300 hover:bg-blue-700 disabled:opacity-50 active:scale-95"
         >
-          Create Account
+          {loading ? (
+            <>
+              <LoaderCircle size={18} className="animate-spin" />
+              Creating Account...
+            </>
+          ) : (
+            "Create Account"
+          )}
         </button>
       </form>
 

@@ -238,7 +238,8 @@ const AdminDashboard = () => {
   }
 
   return (
-    <div className="mx-auto min-h-screen max-w-7xl space-y-8 bg-zinc-50/50 px-4 py-24 sm:px-6 lg:px-8 dark:bg-zinc-950">
+    <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950">
+    <div className="mx-auto max-w-7xl space-y-8 px-4 py-24 sm:px-6 lg:px-8">
       {/* Admin Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
@@ -687,6 +688,7 @@ const AdminDashboard = () => {
           </div>
         </div>
       )}
+    </div>
     </div>
   );
 };

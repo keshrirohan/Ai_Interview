@@ -20,18 +20,27 @@ const router = express.Router();
 
 // ─── Shared cookie options ────────────────────────────────────────────────────
 const COOKIE_OPTIONS = {
-  httpOnly: true,                                        // not accessible via JS
-  secure: process.env.NODE_ENV === "production",        // HTTPS only in prod
-  sameSite: "strict",
-  maxAge: 7 * 24 * 60 * 60 * 1000,                     // 7 days in ms
+  httpOnly: true,                                                         // not accessible via JS
+  secure: process.env.NODE_ENV === "production",                         // HTTPS only in prod
+  sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",     // works cross-origin in dev
+  maxAge: 7 * 24 * 60 * 60 * 1000,                                     // 7 days in ms
 };
 
 // ─── POST /login ──────────────────────────────────────────────────────────────
 router.post("/login", async (req, res) => {
   const { email, password } = req.body;
 
+  if (!email || !password) {
+    return res.status(400).json({
+      success: false,
+      message: "Email and password are required.",
+    });
+  }
+
+  const cleanEmail = email.trim().toLowerCase();
+
   try {
-    const user = await prisma.user.findUnique({ where: { email } });
+    const user = await prisma.user.findUnique({ where: { email: cleanEmail } });
 
     if (!user) {
       return res.status(404).json({
@@ -69,7 +78,7 @@ router.post("/login", async (req, res) => {
     });
   } catch (error) {
     console.error("[auth] login error:", error);
-    return res.status(500).json({ success: false, message: "Server error." });
+    return res.status(500).json({ success: false, message: "Server error during login." });
   }
 });
 
@@ -83,8 +92,24 @@ router.post("/logout", (req, res) => {
 router.post("/register", async (req, res) => {
   const { name, email, password } = req.body;
 
+  if (!name || !email || !password) {
+    return res.status(400).json({
+      success: false,
+      message: "Name, email, and password are required.",
+    });
+  }
+
+  if (password.length < 6) {
+    return res.status(400).json({
+      success: false,
+      message: "Password must be at least 6 characters long.",
+    });
+  }
+
+  const cleanEmail = email.trim().toLowerCase();
+
   try {
-    const existingUser = await prisma.user.findUnique({ where: { email } });
+    const existingUser = await prisma.user.findUnique({ where: { email: cleanEmail } });
 
     if (existingUser) {
       return res.status(400).json({
@@ -96,7 +121,7 @@ router.post("/register", async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const newUser = await prisma.user.create({
-      data: { name, email, password: hashedPassword },
+      data: { name: name.trim(), email: cleanEmail, password: hashedPassword },
     });
 
     const token = jwt.sign({ userId: newUser.id }, process.env.JWT_SECRET, {
@@ -118,7 +143,7 @@ router.post("/register", async (req, res) => {
     });
   } catch (error) {
     console.error("[auth] register error:", error);
-    return res.status(500).json({ success: false, message: "Server error." });
+    return res.status(500).json({ success: false, message: "Server error during registration." });
   }
 });
 

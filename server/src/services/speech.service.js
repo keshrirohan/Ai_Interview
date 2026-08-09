@@ -1,34 +1,58 @@
-import fs from "fs";
+/**
+ * speech.service.js
+ *
+ * Handles audio transcription via Groq Whisper.
+ * Flow:
+ *   1. Upload audio buffer → Cloudinary (cloud storage)
+ *   2. Pass Cloudinary URL → Groq Whisper for transcription
+ *   3. Delete audio from Cloudinary (cleanup)
+ *   4. Return transcript text
+ */
+
 import { groqClient } from "./groq.service.js";
+import { uploadAudioToCloudinary, deleteFromCloudinary } from "./cloudinary.service.js";
 
 export const transcribeAudioService = async (file) => {
-  try {
-    console.log("🎤 Sending audio to Groq...");
+  let cloudinaryPublicId = null;
 
+  try {
+    console.log("☁️  Uploading audio to Cloudinary...");
+
+    // Step 1 — Upload buffer to Cloudinary
+    const { url, publicId } = await uploadAudioToCloudinary(
+      file.buffer,
+      file.originalname
+    );
+    cloudinaryPublicId = publicId;
+
+    console.log("🎤 Sending audio to Groq Whisper...");
+
+    // Step 2 — Transcribe via Groq Whisper using the Cloudinary URL
     const transcription = await groqClient.audio.transcriptions.create({
-      file: fs.createReadStream(file.path),
+      file: await fetch(url).then(async (r) => {
+        const blob = await r.blob();
+        return new File([blob], file.originalname || "audio.webm", {
+          type: file.mimetype || "audio/webm",
+        });
+      }),
       model: "whisper-large-v3-turbo",
       language: "en",
       response_format: "json",
     });
 
-    // Delete uploaded file
-    if (fs.existsSync(file.path)) {
-      fs.unlinkSync(file.path);
-    }
+    console.log("✅ Transcript:", transcription.text);
 
-    console.log("Transcript:", transcription.text);
+    // Step 3 — Cleanup: delete from Cloudinary
+    await deleteFromCloudinary(cloudinaryPublicId);
 
     return transcription.text;
   } catch (error) {
-    // Delete uploaded file even if an error occurs
-    if (fs.existsSync(file.path)) {
-      fs.unlinkSync(file.path);
+    // Cleanup on error too
+    if (cloudinaryPublicId) {
+      await deleteFromCloudinary(cloudinaryPublicId);
     }
 
-    console.error("Groq API Error:");
-    console.error(error);
-
+    console.error("[Speech] Transcription error:", error);
     throw error;
   }
 };

@@ -18,6 +18,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import JDs from "../components/home/JDs";
+import LoadingScreen from "../components/common/LoadingScreen";
 import { errorToast } from "../utils/toast";
 
 const NewInterview = () => {
@@ -27,6 +28,7 @@ const NewInterview = () => {
     jobDescription: "",
     difficulty: "MEDIUM",
   });
+  const [isGenerating, setIsGenerating] = useState(false);
 
   // Update a single form field by name
   const handleChange = (e) => {
@@ -47,6 +49,7 @@ const NewInterview = () => {
     }
 
     try {
+      setIsGenerating(true);
       const response = await fetch(
         `${import.meta.env.VITE_BACKEND_URL}/api/interview/start`,
         {
@@ -60,6 +63,7 @@ const NewInterview = () => {
       const result = await response.json();
 
       if (!result.success) {
+        setIsGenerating(false);
         errorToast(result.message || "Failed to generate interview.");
         return;
       }
@@ -67,10 +71,14 @@ const NewInterview = () => {
       // Navigate to the live interview session
       navigate(`/interview/${result.data.id}`);
     } catch (error) {
-      // Single error toast — previously there were two calls here
+      setIsGenerating(false);
       errorToast(error.message || "Something went wrong. Please try again.");
     }
   };
+
+  if (isGenerating) {
+    return <LoadingScreen />;
+  }
 
   return (
     <div className="min-h-screen bg-zinc-50 pb-10 pt-24 transition-colors duration-300 dark:bg-zinc-950">

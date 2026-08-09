@@ -1,11 +1,13 @@
 import { useState } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { errorToast, successToast } from "../../utils/toast";
+import { LoaderCircle } from "lucide-react";
 
 const Login = ({ openSignup, openForgot, closeModal }) => {
   const { login } = useAuth();
 
   const [formData, setFormData] = useState({ email: "", password: "" });
+  const [loading, setLoading] = useState(false);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -14,26 +16,30 @@ const Login = ({ openSignup, openForgot, closeModal }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Use the toast system — not alert() — for consistency
     if (!formData.email || !formData.password) {
       errorToast("Please fill in both email and password.");
       return;
     }
 
     try {
+      setLoading(true);
+      const payload = {
+        ...formData,
+        email: formData.email.trim().toLowerCase(),
+      };
+
       const response = await fetch(
         `${import.meta.env.VITE_BACKEND_URL}/api/auth/login`,
         {
           method: "POST",
           credentials: "include",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(formData),
+          body: JSON.stringify(payload),
         },
       );
 
       const data = await response.json();
 
-      // Check success BEFORE updating context or showing a success toast
       if (!data.success) {
         errorToast(data.message || "Login failed. Please try again.");
         return;
@@ -45,6 +51,8 @@ const Login = ({ openSignup, openForgot, closeModal }) => {
     } catch (error) {
       console.error("[Login] error:", error);
       errorToast("Something went wrong. Please try again.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -112,9 +120,17 @@ const Login = ({ openSignup, openForgot, closeModal }) => {
 
         <button
           type="submit"
-          className="w-full rounded-lg bg-blue-600 py-3 text-sm font-semibold text-white transition-all duration-300 hover:bg-blue-700 active:scale-95"
+          disabled={loading}
+          className="flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 py-3 text-sm font-semibold text-white transition-all duration-300 hover:bg-blue-700 disabled:opacity-50 active:scale-95"
         >
-          Login
+          {loading ? (
+            <>
+              <LoaderCircle size={18} className="animate-spin" />
+              Logging in...
+            </>
+          ) : (
+            "Login"
+          )}
         </button>
       </form>
 

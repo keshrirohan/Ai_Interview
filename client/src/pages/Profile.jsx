@@ -308,11 +308,13 @@ const Profile = () => {
 
   if (error) {
     return (
-      <div className="mx-auto min-h-screen max-w-7xl px-6 py-24 dark:bg-zinc-950">
+      <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950">
+      <div className="mx-auto max-w-7xl px-6 py-24">
         <div className="rounded-2xl border border-red-200 bg-red-50 p-6 text-red-700 dark:border-red-900/50 dark:bg-red-950/50 dark:text-red-300">
           <p className="font-semibold">Unable to load dashboard</p>
           <p className="text-sm">{error}</p>
         </div>
+      </div>
       </div>
     );
   }
@@ -376,7 +378,8 @@ const Profile = () => {
   );
 
   return (
-    <div className="mx-auto min-h-screen max-w-7xl space-y-10 bg-zinc-50/50 px-4 py-24 sm:px-6 lg:px-8 dark:bg-zinc-950">
+    <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950">
+    <div className="mx-auto max-w-7xl space-y-10 px-4 py-24 sm:px-6 lg:px-8">
       {/* ── Header Card ────────────────────────────────────────────────── */}
       <div className="relative overflow-hidden rounded-3xl border border-zinc-200 bg-white p-8 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
         <div className="absolute -right-12 -top-12 h-64 w-64 rounded-full bg-blue-500/5 blur-3xl" />
@@ -1071,6 +1074,7 @@ const Profile = () => {
         onClose={() => setPaymentModalPlan(null)}
         onSuccess={() => window.location.reload()}
       />
+    </div>
     </div>
   );
 };
