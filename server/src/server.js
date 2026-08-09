@@ -16,6 +16,8 @@ dotenv.config();
 const app = express();
 
 // ─── Middleware ───────────────────────────────────────────────────────────────
+const isProduction = process.env.NODE_ENV === "production";
+
 const allowedOrigins = [
   process.env.Frontend_URL,
   "http://localhost:5173",
@@ -26,10 +28,15 @@ const allowedOrigins = [
 app.use(
   cors({
     origin: (origin, callback) => {
-      if (!origin || allowedOrigins.includes(origin) || process.env.NODE_ENV !== "production") {
+      // Allow requests with no origin (e.g. curl, mobile apps, same-origin SSR)
+      if (!origin) return callback(null, true);
+      // In development — allow everything
+      if (!isProduction) return callback(null, true);
+      // In production — only allow explicitly listed origins
+      if (allowedOrigins.includes(origin)) {
         return callback(null, true);
       }
-      return callback(null, true);
+      return callback(new Error(`CORS: origin ${origin} not allowed`), false);
     },
     credentials: true,
   }),
