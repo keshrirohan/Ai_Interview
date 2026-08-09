@@ -10,7 +10,7 @@ Welcome to the **EchoHire AI Developer Guide**. This document provides an end-to
 3. [Database Schema & Entity Relationship Model](#3-database-schema--entity-relationship-model)
 4. [SaaS Plan Matrix & Upgrade-Only Business Rules](#4-saas-plan-matrix--upgrade-only-business-rules)
 5. [Complete API Endpoint Registry](#5-complete-api-endpoint-registry)
-6. [Razorpay Payment Gateway Workflow](#6-razorpay-payment-gateway-workflow)
+6. [Stripe Payment Gateway Workflow](#6-stripe-payment-gateway-workflow)
 7. [Frontend Architecture & Component Mapping](#7-frontend-architecture--component-mapping)
 8. [Environment Variables Matrix](#8-environment-variables-matrix)
 
@@ -25,7 +25,7 @@ Welcome to the **EchoHire AI Developer Guide**. This document provides an end-to
 | **API Server** | Request validation, business logic, transaction management | `server/src/server.js`<br>`server/src/routes/*.js` | Express 5 controllers & service functions |
 | **AI LLM Engine** | Dynamic question generation, answer evaluation, performance scoring | `server/src/services/groq.service.js` | Async HTTPS calls to Groq API (`llama-3.3-70b-versatile`) |
 | **Database & ORM** | Data persistence, atomic transactions, plan limit checks | `server/src/lib/prisma.js`<br>`server/prisma/schema.prisma` | Prisma Client 7 over PostgreSQL connection pool |
-| **Payment Gateway** | Order creation, payment authorization, HMAC signature verification | `server/src/services/payment.service.js`<br>`client/src/components/payment/PaymentModal.jsx` | Razorpay REST API & JS SDK (`window.Razorpay`) |
+| **Payment Gateway** | PaymentIntent creation, payment authorization, transaction verification | `server/src/services/payment.service.js`<br>`client/src/components/payment/PaymentModal.jsx` | Stripe SDK & REST API |
 
 ---
 
@@ -43,6 +43,7 @@ Welcome to the **EchoHire AI Developer Guide**. This document provides an end-to
 | **Backend** | Node.js | `>= 18.0.0` | Server runtime executing ES Modules (`import/export`) |
 | **Backend** | Express.js | `^5.2.1` | Web framework for HTTP routes and controller handling |
 | **Backend** | Groq SDK | `^1.3.0` | Ultra-fast AI LLM inference engine driver |
+| **Backend** | Stripe SDK | `^17.0.0` | Stripe PaymentIntents & payment verification driver |
 | **Backend** | Prisma ORM | `^7.9.0` | Type-safe PostgreSQL database client & schema migrations |
 | **Backend** | jsonwebtoken | `^9.0.3` | JWT generation and cookie decoding |
 | **Backend** | bcrypt | `^6.0.0` | Secure password hashing (10 salt rounds) |
@@ -83,7 +84,7 @@ Welcome to the **EchoHire AI Developer Guide**. This document provides an end-to
 | | `userId` | `String` | Foreign Key | References `User.id` |
 | | `amount` | `Float` | | Transaction amount in INR |
 | | `status` | `PaymentStatus` | `@default(PENDING)` | Status (`PENDING`, `SUCCESS`, `FAILED`) |
-| | `paymentId` | `String` | `@unique` | Razorpay payment ID (`pay_...`) |
+| | `paymentId` | `String` | `@unique` | Stripe PaymentIntent ID (`pi_...`) |
 | | `createdAt` | `DateTime` | `@default(now())` | Payment record timestamp |
 
 ---
@@ -110,13 +111,13 @@ EchoHire AI implements an **upgrade-only subscription hierarchy**. Users cannot 
 | Current User Plan | Target Selected Plan | Allowed? | UI Button State | Server Response |
 |---|---|---|---|---|
 | `FREE` | `FREE` | ❌ No | Disabled (`"Active Plan"`) | N/A |
-| `FREE` | `GOLD` | ✅ **Yes** | Active (`"Upgrade to Gold"`) | `200 OK` (Order Created) |
-| `FREE` | `PLATINUM` | ✅ **Yes** | Active (`"Upgrade to Platinum"`) | `200 OK` (Order Created) |
+| `FREE` | `GOLD` | ✅ **Yes** | Active (`"Upgrade to Gold"`) | `200 OK` (Intent Created) |
+| `FREE` | `PLATINUM` | ✅ **Yes** | Active (`"Upgrade to Platinum"`) | `200 OK` (Intent Created) |
 | `GOLD` | `FREE` | ❌ **No (Downgrade)** | Disabled (`"Included in Your Plan"`) | `400 Bad Request` |
 | `GOLD` | `GOLD` | ❌ **No (Same Plan)** | Disabled (`"Active Plan"`) | `400 Bad Request` |
-| `GOLD` | `PLATINUM` | ✅ **Yes** | Active (`"Upgrade to Platinum"`) | `200 OK` (Order Created) |
+| `GOLD` | `PLATINUM` | ✅ **Yes** | Active (`"Upgrade to Platinum"`) | `200 OK` (Intent Created) |
 | `PLATINUM` | `FREE` | ❌ **No (Downgrade)** | Disabled (`"Included in Your Plan"`) | `400 Bad Request` |
-| `PLATINUM` | `GOLD` | 开启 **No (Downgrade)** | Disabled (`"Included in Your Plan"`) | `400 Bad Request` |
+| `PLATINUM` | `GOLD` | ❌ **No (Downgrade)** | Disabled (`"Included in Your Plan"`) | `400 Bad Request` |
 | `PLATINUM` | `PLATINUM` | ❌ **No (Same Plan)** | Disabled (`"Active Plan"`) | `400 Bad Request` |
 
 ---
@@ -145,8 +146,8 @@ EchoHire AI implements an **upgrade-only subscription hierarchy**. Users cannot 
 
 | Endpoint | Method | Auth Required | Request Payload | Purpose & Description |
 |---|---|---|---|---|
-| `/api/payment/create-order` | `POST` | User JWT | `{ plan: "GOLD" \| "PLATINUM" }` | Validates upgrade hierarchy and returns Razorpay order ID |
-| `/api/payment/verify` | `POST` | User JWT | `{ orderId, paymentId, signature, plan, amount }` | Verifies HMAC SHA-256 signature and upgrades user plan in DB |
+| `/api/payment/create-order` | `POST` | User JWT | `{ plan: "GOLD" \| "PLATINUM" }` | Validates upgrade hierarchy and creates Stripe PaymentIntent |
+| `/api/payment/verify` | `POST` | User JWT | `{ orderId, paymentId, clientSecret, plan, amount }` | Verifies Stripe PaymentIntent and upgrades user plan in DB |
 | `/api/payment/history` | `GET` | User JWT | None | Fetches candidate transaction logs |
 
 ### 5.4 Dashboard & Admin Endpoints (`/api/dashboard`, `/api/admin`)
@@ -160,7 +161,7 @@ EchoHire AI implements an **upgrade-only subscription hierarchy**. Users cannot 
 
 ---
 
-## 6. Razorpay Payment Gateway Workflow
+## 6. Stripe Payment Gateway Workflow
 
 ```
 [Candidate UI] ──(Selects Upgrade Plan)──> [PaymentModal.jsx]
@@ -168,17 +169,17 @@ EchoHire AI implements an **upgrade-only subscription hierarchy**. Users cannot 
        ├── 1. POST /api/payment/create-order { plan: "PLATINUM" }
        │      │
        │      ├──> Backend checks: PLAN_RANKS[target] > PLAN_RANKS[current]
-       │      ├──> REST call to Razorpay API (or test fallback)
-       │      └──> Returns { orderId: "order_xyz", keyId: "rzp_test_...", amount: 999 }
+       │      ├──> Stripe SDK creates PaymentIntent (or test fallback)
+       │      └──> Returns { orderId: "pi_xyz", clientSecret: "pi_xyz_secret_...", amount: 999 }
        │
-       ├── 2. Opens window.Razorpay Checkout Modal
+       ├── 2. Displays Stripe Checkout Card / Instant Authorization Form
        │      │
-       │      └──> User enters payment details (Card/UPI/Netbanking)
+       │      └──> User authorizes payment (Card/UPI/Stripe Express)
        │
-       └── 3. Razorpay returns { razorpay_payment_id, razorpay_order_id, razorpay_signature }
+       └── 3. Completes payment with PaymentIntent ID
               │
               ├──> POST /api/payment/verify
-              ├──> Server verifies crypto HMAC-SHA256(order_id + "|" + payment_id, secret)
+              ├──> Server verifies PaymentIntent status via Stripe SDK
               ├──> Atomic DB Transaction:
               │    ├── create Payment log
               │    ├── update User.plan = "PLATINUM"
@@ -195,7 +196,7 @@ EchoHire AI implements an **upgrade-only subscription hierarchy**. Users cannot 
 | `AuthProvider` | `client/src/context/AuthProvider.jsx` | Global user state, login/logout functions, session restoration |
 | `Plan` | `client/src/components/home/Plan.jsx` | Subscription section rendering `PlanCard` components |
 | `PlanCard` | `client/src/components/home/PlanCard.jsx` | Pricing card with upgrade-only button states & tier indicators |
-| `PaymentModal` | `client/src/components/payment/PaymentModal.jsx` | Multi-tab checkout modal supporting Card, UPI, and Razorpay JS popup |
+| `PaymentModal` | `client/src/components/payment/PaymentModal.jsx` | Multi-tab responsive checkout modal supporting Card, UPI, and Stripe |
 | `useInterview` | `client/src/hooks/useInterview.js` | Main interview state machine handling speech sync, Groq calls, & timers |
 | `TranscriptPanel` | `client/src/components/interview/TranscriptPanel.jsx` | Real-time speech transcript visualizer |
 | `Profile` | `client/src/pages/Profile.jsx` | User dashboard, performance charts, model answer locks & upgrade triggers |
@@ -212,10 +213,12 @@ EchoHire AI implements an **upgrade-only subscription hierarchy**. Users cannot 
 | `PORT` | Server | No | `5000` | Express server HTTP port |
 | `NODE_ENV` | Server | No | `development` | Environment mode (`development` / `production`) |
 | `Frontend_URL` | Server | Yes | `http://localhost:5173` | CORS allowed origin for client requests |
-| `RAZORPAY_KEY_ID` | Server | Optional | `rzp_test_echohire` | Razorpay API Key ID for live checkout |
-| `RAZORPAY_KEY_SECRET` | Server | Optional | N/A | Razorpay Key Secret for HMAC verification |
+| `STRIPE_SECRET_KEY` | Server | Optional | `sk_test_echohire` | Stripe API Secret Key for PaymentIntents |
+| `STRIPE_PUBLISHABLE_KEY` | Server | Optional | `pk_test_echohire` | Stripe API Publishable Key |
 | `VITE_BACKEND_URL` | Client | Yes | `http://localhost:5000` | Backend API base URL for fetch requests |
+| `VITE_STRIPE_PUBLISHABLE_KEY` | Client | Optional | `pk_test_echohire` | Client Stripe Publishable Key |
 
 ---
 
-*End of Developer Technical Manual. Updated for EchoHire AI Upgrade-Only Architecture & Razorpay Payment Integration.*
+*End of Developer Technical Manual. Updated for EchoHire AI Upgrade-Only Architecture & Stripe Payment Integration.*
+

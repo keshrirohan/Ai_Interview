@@ -5,14 +5,13 @@ import {
   Lock,
   QrCode,
   ShieldCheck,
-  Sparkles,
   X,
   LoaderCircle,
   Zap,
 } from "lucide-react";
 
 const PaymentModal = ({ planName = "GOLD", isOpen, onClose, onSuccess }) => {
-  const [method, setMethod] = useState("card"); // "card" | "upi" | "razorpay"
+  const [method, setMethod] = useState("card"); // "card" | "upi" | "stripe"
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [successMsg, setSuccessMsg] = useState("");
@@ -31,27 +30,13 @@ const PaymentModal = ({ planName = "GOLD", isOpen, onClose, onSuccess }) => {
   const validPlan = planName.toUpperCase() === "PLATINUM" ? "PLATINUM" : "GOLD";
   const amount = validPlan === "PLATINUM" ? 999 : 499;
 
-  const loadRazorpayScript = () => {
-    return new Promise((resolve) => {
-      if (window.Razorpay) {
-        resolve(true);
-        return;
-      }
-      const script = document.createElement("script");
-      script.src = "https://checkout.razorpay.com/v1/checkout.js";
-      script.onload = () => resolve(true);
-      script.onerror = () => resolve(false);
-      document.body.appendChild(script);
-    });
-  };
-
   const handlePaymentSubmit = async (e) => {
     e.preventDefault();
     try {
       setLoading(true);
       setError("");
 
-      // 1. Create Payment Order in Backend
+      // 1. Create Stripe Payment Order / Intent in Backend
       const orderRes = await fetch(
         `${import.meta.env.VITE_BACKEND_URL}/api/payment/create-order`,
         {
@@ -67,45 +52,13 @@ const PaymentModal = ({ planName = "GOLD", isOpen, onClose, onSuccess }) => {
         throw new Error(orderJson.message || "Failed to create payment order.");
       }
 
-      const { orderId, keyId, amount: orderAmount } = orderJson.data;
+      const { orderId, clientSecret } = orderJson.data;
 
-      // If user selected Razorpay Express Popup and key is configured
-      if (method === "razorpay" && keyId && keyId !== "rzp_test_echohire") {
-        const loaded = await loadRazorpayScript();
-        if (loaded && window.Razorpay) {
-          const options = {
-            key: keyId,
-            amount: orderAmount * 100,
-            currency: "INR",
-            name: "EchoHire AI",
-            description: `Upgrade to ${validPlan} Plan`,
-            order_id: orderId,
-            handler: async function (rzpResponse) {
-              await verifyAndCompletePayment({
-                orderId: rzpResponse.razorpay_order_id || orderId,
-                paymentId: rzpResponse.razorpay_payment_id,
-                signature: rzpResponse.razorpay_signature,
-                plan: validPlan,
-                amount,
-              });
-            },
-            modal: {
-              ondismiss: function () {
-                setLoading(false);
-              },
-            },
-            theme: { color: "#2563eb" },
-          };
-          const rzp = new window.Razorpay(options);
-          rzp.open();
-          return;
-        }
-      }
-
-      // Standard Card / UPI or Simulated Payment Verification
+      // 2. Complete Payment Verification & Plan Upgrade
       await verifyAndCompletePayment({
         orderId,
-        paymentId: `pay_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+        paymentId: orderId || `pi_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+        clientSecret,
         plan: validPlan,
         amount,
       });
@@ -147,19 +100,19 @@ const PaymentModal = ({ planName = "GOLD", isOpen, onClose, onSuccess }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center overflow-y-auto bg-black/60 p-4 backdrop-blur-sm">
-      <div className="relative w-full max-w-lg overflow-hidden rounded-3xl border border-zinc-200 bg-white p-6 sm:p-8 shadow-2xl dark:border-zinc-800 dark:bg-zinc-900">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center overflow-y-auto bg-black/60 p-4 sm:p-6 backdrop-blur-sm">
+      <div className="relative w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-3xl border border-zinc-200 bg-white p-5 sm:p-8 shadow-2xl dark:border-zinc-800 dark:bg-zinc-900">
         {/* Close Button */}
         <button
           onClick={onClose}
-          className="absolute right-5 top-5 rounded-full bg-zinc-100 p-2 text-zinc-500 transition hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
+          className="absolute right-4 top-4 rounded-full bg-zinc-100 p-2 text-zinc-500 transition hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
         >
           <X size={18} />
         </button>
 
         {/* Modal Header */}
         <div className="mb-6">
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <span className="rounded-full bg-blue-100 px-3 py-1 text-xs font-bold text-blue-700 dark:bg-blue-500/10 dark:text-blue-400">
               UPGRADE SUBSCRIPTION
             </span>
@@ -168,7 +121,7 @@ const PaymentModal = ({ planName = "GOLD", isOpen, onClose, onSuccess }) => {
             </span>
           </div>
 
-          <h2 className="mt-3 text-2xl font-bold text-zinc-900 dark:text-white">
+          <h2 className="mt-3 text-xl sm:text-2xl font-bold text-zinc-900 dark:text-white">
             Checkout — {validPlan} Plan
           </h2>
           <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
@@ -187,7 +140,7 @@ const PaymentModal = ({ planName = "GOLD", isOpen, onClose, onSuccess }) => {
             </p>
           </div>
           <div className="text-right">
-            <span className="text-2xl font-extrabold text-blue-600 dark:text-blue-400">
+            <span className="text-xl sm:text-2xl font-extrabold text-blue-600 dark:text-blue-400">
               ₹{amount}
             </span>
             <span className="text-xs text-zinc-400"> /year</span>
@@ -195,7 +148,7 @@ const PaymentModal = ({ planName = "GOLD", isOpen, onClose, onSuccess }) => {
         </div>
 
         {/* Payment Method Selector Tabs */}
-        <div className="mb-6 grid grid-cols-3 gap-2 rounded-2xl border border-zinc-200 bg-zinc-50 p-1.5 dark:border-zinc-800 dark:bg-zinc-950">
+        <div className="mb-6 grid grid-cols-3 gap-1.5 sm:gap-2 rounded-2xl border border-zinc-200 bg-zinc-50 p-1.5 dark:border-zinc-800 dark:bg-zinc-950">
           <button
             type="button"
             onClick={() => setMethod("card")}
@@ -222,14 +175,14 @@ const PaymentModal = ({ planName = "GOLD", isOpen, onClose, onSuccess }) => {
 
           <button
             type="button"
-            onClick={() => setMethod("razorpay")}
+            onClick={() => setMethod("stripe")}
             className={`flex items-center justify-center gap-1.5 rounded-xl py-2 text-xs font-semibold transition ${
-              method === "razorpay"
+              method === "stripe"
                 ? "bg-white text-blue-600 shadow-sm dark:bg-zinc-800 dark:text-white"
                 : "text-zinc-500 hover:text-zinc-800 dark:text-zinc-400"
             }`}
           >
-            <Zap size={14} /> One-Click
+            <Zap size={14} /> Stripe
           </button>
         </div>
 
@@ -331,14 +284,14 @@ const PaymentModal = ({ planName = "GOLD", isOpen, onClose, onSuccess }) => {
             </div>
           )}
 
-          {method === "razorpay" && (
+          {method === "stripe" && (
             <div className="rounded-2xl border border-dashed border-zinc-200 bg-zinc-50 p-6 text-center dark:border-zinc-800 dark:bg-zinc-950">
               <Zap className="mx-auto text-blue-500 mb-2" size={32} />
               <p className="text-xs font-semibold text-zinc-800 dark:text-zinc-200">
-                Instant One-Click Express Checkout
+                Instant Stripe Express Checkout
               </p>
               <p className="mt-1 text-[11px] text-zinc-500">
-                Automatically connects to Razorpay / Stripe gateway for instant authorization.
+                Directly connects to Stripe PaymentIntent gateway for instant authorization and secure processing.
               </p>
             </div>
           )}
@@ -366,3 +319,4 @@ const PaymentModal = ({ planName = "GOLD", isOpen, onClose, onSuccess }) => {
 };
 
 export default PaymentModal;
+

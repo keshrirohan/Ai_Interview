@@ -1,6 +1,6 @@
 # EchoHire AI — AI-Powered Mock Interview & Career Platform
 
-EchoHire AI is a state-of-the-art voice-driven AI mock interview application designed to simulate real candidate screening sessions. Candidates specify job descriptions and target difficulty levels to undergo dynamic 10-question AI interviews powered by Groq LLaMA 3.3. EchoHire AI features real-time speech-to-text, text-to-speech AI feedback, detailed competency analytics, performance reports, and an upgrade-only tier subscription model integrated with Razorpay payments.
+EchoHire AI is a state-of-the-art voice-driven AI mock interview application designed to simulate real candidate screening sessions. Candidates specify job descriptions and target difficulty levels to undergo dynamic 10-question AI interviews powered by Groq LLaMA 3.3. EchoHire AI features real-time speech-to-text, text-to-speech AI feedback, detailed competency analytics, performance reports, and an upgrade-only tier subscription model integrated with Stripe payments.
 
 ---
 
@@ -29,7 +29,7 @@ EchoHire AI is a state-of-the-art voice-driven AI mock interview application des
 | **AI LLM Inference** | Groq SDK (`llama-3.3-70b-versatile`) |
 | **Database & ORM** | PostgreSQL, Prisma ORM 7 (`@prisma/client`) |
 | **Authentication** | JWT stored in secure `httpOnly` cookies + `bcrypt` hashing |
-| **Payment Gateway** | Razorpay REST API & SDK (HMAC SHA-256 Signature Verification) |
+| **Payment Gateway** | Stripe SDK (PaymentIntents & Express Checkout Verification) |
 
 ---
 
@@ -48,19 +48,20 @@ FREE (Rank 0) ──> GOLD (Rank 1) ──> PLATINUM (Rank 2)
 
 ---
 
-## 💳 Payment Gateway Integration (Razorpay)
+## 💳 Payment Gateway Integration (Stripe)
 
-EchoHire AI supports **Razorpay Express Checkout** with server-side HMAC signature verification and automatic test simulator fallback:
+EchoHire AI supports **Stripe PaymentIntents Checkout** with server-side authorization and automatic test simulator fallback:
 
 ### Live / Test Mode Setup
-1. Sign up on [Razorpay Dashboard](https://dashboard.razorpay.com).
-2. Generate API Key ID & Secret under **Settings -> API Keys**.
-3. Add keys to `server/.env`:
+1. Sign up on [Stripe Dashboard](https://dashboard.stripe.com).
+2. Obtain API Publishable & Secret Keys under **Developers -> API keys**.
+3. Add keys to `server/.env` and `client/.env`:
    ```env
-   RAZORPAY_KEY_ID=rzp_test_xxxxxx
-   RAZORPAY_KEY_SECRET=your_razorpay_secret
+   STRIPE_SECRET_KEY=sk_test_xxxxxx
+   STRIPE_PUBLISHABLE_KEY=pk_test_xxxxxx
+   VITE_STRIPE_PUBLISHABLE_KEY=pk_test_xxxxxx
    ```
-4. When keys are present, the client dynamically loads Razorpay Checkout JS (`https://checkout.razorpay.com/v1/checkout.js`) and opens the popup. The backend creates official Razorpay Order IDs (`order_...`) and verifies `razorpay_signature` via `crypto.createHmac('sha256', secret)`.
+4. When keys are present, the backend creates official Stripe PaymentIntents (`pi_...`) and verifies transaction completion via the Stripe SDK. In development mode without credentials, an automated test simulator fallback is enabled.
 
 ---
 
@@ -107,13 +108,14 @@ GROQ_API_KEY="gsk_xxxxxxxxxxxxxxxx"
 PORT=5000
 NODE_ENV="development"
 Frontend_URL="http://localhost:5173"
-RAZORPAY_KEY_ID="rzp_test_xxxxxx"
-RAZORPAY_KEY_SECRET="xxxxxxxxxxxx"
+STRIPE_SECRET_KEY="sk_test_xxxxxx"
+STRIPE_PUBLISHABLE_KEY="pk_test_xxxxxx"
 ```
 
 ### `client/.env`
 ```env
 VITE_BACKEND_URL="http://localhost:5000"
+VITE_STRIPE_PUBLISHABLE_KEY="pk_test_xxxxxx"
 ```
 
 ---
