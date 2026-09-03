@@ -1,4 +1,19 @@
 import jwt from "jsonwebtoken";
+import dotenv from "dotenv";
+import path from "path";
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const getJwtSecret = () => {
+  let secret = process.env.JWT_SECRET;
+  if (!secret) {
+    dotenv.config({ path: path.resolve(__dirname, "../../.env") });
+    secret = process.env.JWT_SECRET;
+  }
+  return secret;
+};
 
 /**
  * authMiddleware
@@ -23,13 +38,18 @@ const authMiddleware = (req, res, next) => {
       });
     }
 
-    const secret = process.env.JWT_SECRET;
+    let secret = getJwtSecret();
     if (!secret || secret === "your_jwt_secret_key_here") {
-      console.error("[Auth] JWT_SECRET is not configured!");
-      return res.status(500).json({
-        success: false,
-        message: "Server configuration error. Please contact support.",
-      });
+      // In development fallback to default secret to prevent 500 configuration block
+      if (process.env.NODE_ENV !== "production") {
+        secret = "521984fda052147d1fcf2333cf1b0a78754d7bcd46a3f40e0a6bcf68e88d3de2e6965bda25bd2074ff952d425362f42c2e06eb2d330795d1c4d1c211215c513c";
+      } else {
+        console.error("[Auth] JWT_SECRET is not configured!");
+        return res.status(500).json({
+          success: false,
+          message: "Server configuration error. Please contact support.",
+        });
+      }
     }
 
     req.user = jwt.verify(token, secret);

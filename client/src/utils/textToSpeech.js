@@ -68,6 +68,3 @@ export const speak = (text, onEnd) => {
 
   synth.speak(utterance);
 };
-
-// Backward-compat alias
-export const stopSpeaking = cancelSpeak;

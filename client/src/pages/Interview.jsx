@@ -9,8 +9,6 @@
 
 import { useParams } from "react-router-dom";
 
-import { useAuth } from "../context/AuthContext";
-
 import useInterview from "../hooks/useInterview";
 
 import LoadingScreen from "../components/common/LoadingScreen";
@@ -25,10 +23,9 @@ import TranscriptPanel from "../components/interview/TranscriptPanel";
 const Interview = () => {
   const { id: interviewId } = useParams();
 
-  const { loading } = useAuth();
-
   const {
     interview,
+    loading,
     processing,
     error,
     question,

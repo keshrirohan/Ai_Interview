@@ -3,21 +3,51 @@
  *
  * "Forgot password" form rendered inside the Navbar auth modal.
  *
- * Current state: UI-only. The backend reset endpoint is not yet implemented.
- * When it is ready, replace the TODO comment with the actual API call.
+ * Current state: the backend reset endpoint is not yet implemented.
+ * When it is ready, replace the TODO block with the real API call and
+ * remove the "not yet available" toast.
  *
  * Props:
  *   openLogin {Function} — switch the modal back to the Login view
  */
 
 import { useState } from "react";
+import { errorToast, successToast } from "../../utils/toast";
 
 const ForgetPassword = ({ openLogin }) => {
-  const [email, setEmail] = useState("");
+  const [email, setEmail]       = useState("");
+  const [loading, setLoading]   = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // TODO: call POST /api/auth/forgot-password once the backend endpoint exists
+
+    if (!email.trim()) {
+      errorToast("Please enter your email address.");
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      // TODO: replace this block with the real API call once the backend
+      // endpoint POST /api/auth/forgot-password is implemented.
+      // Example:
+      //   const res  = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/auth/forgot-password`, {
+      //     method: "POST",
+      //     headers: { "Content-Type": "application/json" },
+      //     body: JSON.stringify({ email }),
+      //   });
+      //   const data = await res.json();
+      //   if (!data.success) throw new Error(data.message);
+      //   successToast("Reset link sent! Check your inbox.");
+
+      // Until the endpoint exists, tell the user clearly rather than silently doing nothing.
+      errorToast("Password reset is not yet available. Please contact support.");
+    } catch (err) {
+      errorToast(err.message || "Something went wrong. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -35,13 +65,13 @@ const ForgetPassword = ({ openLogin }) => {
       <form onSubmit={handleSubmit} className="mt-8 space-y-5">
         <div>
           <label
-            htmlFor="email"
+            htmlFor="fp-email"
             className="mb-2 block text-sm font-medium text-zinc-700 dark:text-zinc-300"
           >
             Email Address
           </label>
           <input
-            id="email"
+            id="fp-email"
             type="email"
             placeholder="Enter your email"
             value={email}
@@ -53,9 +83,10 @@ const ForgetPassword = ({ openLogin }) => {
 
         <button
           type="submit"
-          className="w-full rounded-lg bg-blue-600 py-3 font-semibold text-white transition-all duration-300 hover:bg-blue-700 active:scale-95"
+          disabled={loading}
+          className="w-full rounded-lg bg-blue-600 py-3 font-semibold text-white transition-all duration-300 hover:bg-blue-700 active:scale-95 disabled:opacity-60"
         >
-          Send Reset Link
+          {loading ? "Sending…" : "Send Reset Link"}
         </button>
       </form>
 

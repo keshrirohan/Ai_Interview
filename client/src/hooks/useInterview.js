@@ -1,9 +1,8 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+﻿import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { cancelSpeak, speak } from "../utils/textToSpeech";
-
-import { useAuth } from "../context/AuthContext";
+import { API_BASE } from "../config/api";
 
 import useCamera from "./useCamera";
 import useMediaRecorder from "./useMediaRecorder";
@@ -12,8 +11,6 @@ import { uploadAudio } from "../services/speech.service";
 
 const useInterview = (interviewId) => {
   const navigate = useNavigate();
-
-  const { loading, setLoading } = useAuth();
 
   /* -------------------------------------------------------------------------- */
   /*                                Camera Hook                                 */
@@ -63,6 +60,10 @@ const useInterview = (interviewId) => {
 
   const [isSpeaking, setIsSpeaking] = useState(false);
 
+  // Local loading state â€” true while fetching interview details and first
+  // question. Kept here (not in AuthContext) so it only affects this page.
+  const [loading, setLoading] = useState(true);
+
   /* -------------------------------------------------------------------------- */
   /*                                  Refs                                      */
   /* -------------------------------------------------------------------------- */
@@ -100,7 +101,7 @@ const useInterview = (interviewId) => {
         const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
         const res = await fetch(
-          `${import.meta.env.VITE_BACKEND_URL}/api/interview/${interviewId}`,
+          `${API_BASE}/api/interview/${interviewId}`,
           { credentials: "include", headers, signal: controller.signal },
         );
 
@@ -117,7 +118,7 @@ const useInterview = (interviewId) => {
           setTotalQuestions(json.data.maxQuestions);
         }
       } catch (err) {
-        if (err.name === "AbortError") return; // navigated away — ignore safely
+        if (err.name === "AbortError") return; // navigated away â€” ignore safely
         setError(err.message);
         setLoading(false); // stop spinner on error so user sees the error banner
       }
@@ -140,7 +141,7 @@ const useInterview = (interviewId) => {
       try {
         const token = localStorage.getItem("token");
         const res = await fetch(
-          `${import.meta.env.VITE_BACKEND_URL}/api/interview/${interviewId}/question`,
+          `${API_BASE}/api/interview/${interviewId}/question`,
           {
             method: "POST",
             credentials: "include",
@@ -165,7 +166,7 @@ const useInterview = (interviewId) => {
         if (err.name === "AbortError") return;
         setError(err.message);
       } finally {
-        // Always turn off loading here — whether success or failure
+        // Always turn off loading here â€” whether success or failure
         setLoading(false);
       }
     };
@@ -211,7 +212,7 @@ const useInterview = (interviewId) => {
     setError(null);
 
     try {
-      // Single stop call — grabs the final blob directly, no need to
+      // Single stop call â€” grabs the final blob directly, no need to
       // pre-check isRecording and call stopRecording() a second time.
       const blob = await stopRecording();
 
@@ -228,7 +229,7 @@ const useInterview = (interviewId) => {
 
       const token = localStorage.getItem("token");
       const res = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/api/interview/${interviewId}/process`,
+        `${API_BASE}/api/interview/${interviewId}/process`,
         {
           method: "POST",
           credentials: "include",
@@ -247,7 +248,7 @@ const useInterview = (interviewId) => {
       }
 
       if (json.data.completed) {
-        // Server says all questions are done — end the interview
+        // Server says all questions are done â€” end the interview
         endInterview();
         return;
       }
@@ -255,7 +256,7 @@ const useInterview = (interviewId) => {
       setTranscript("");
       resetRecording();
       setQuestion(json.data.nextQuestion);
-      // Advance to the next question — TTS will fire via effect above
+      // Advance to the next question â€” TTS will fire via effect above
       setCurrentQuestion(json.data.currentQuestion ?? ((prev) => prev + 1));
     } catch (err) {
       setError(err.message);
@@ -276,7 +277,7 @@ const useInterview = (interviewId) => {
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   return {
-    interview, // full interview record (role, difficulty, jobDescription…)
+    interview, // full interview record (role, difficulty, jobDescriptionâ€¦)
     loading, // true while fetching details + first question
     processing, // true while /process API call is in-flight
     currentQuestion, // current question number (1-based)
@@ -304,3 +305,4 @@ const useInterview = (interviewId) => {
 };
 
 export default useInterview;
+

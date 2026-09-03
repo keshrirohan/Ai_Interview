@@ -15,8 +15,23 @@ import express from "express";
 import { prisma } from "../../lib/prisma.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
+import { rateLimit } from "express-rate-limit";
 
 const router = express.Router();
+
+const JWT_SECRET_DEV_FALLBACK = "521984fda052147d1fcf2333cf1b0a78754d7bcd46a3f40e0a6bcf68e88d3de2e6965bda25bd2074ff952d425362f42c2e06eb2d330795d1c4d1c211215c513c";
+const getSecret = () => process.env.JWT_SECRET || JWT_SECRET_DEV_FALLBACK;
+
+// ─── Rate limiter for auth endpoints ─────────────────────────────────────────
+// 10 attempts per 15 minutes — only enforced in production
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, message: "Too many attempts. Please try again in 15 minutes." },
+  skip: () => process.env.NODE_ENV !== "production",
+});
 
 // ─── Shared cookie options ────────────────────────────────────────────────────
 const isProd = process.env.NODE_ENV === "production";
@@ -25,10 +40,11 @@ const COOKIE_OPTIONS = {
   secure: isProd,                                                        // HTTPS in prod
   sameSite: isProd ? "none" : "lax",                                    // cross-origin in prod
   maxAge: 7 * 24 * 60 * 60 * 1000,                                      // 7 days
+  path: "/",                                                             // available across all routes
 };
 
 // ─── POST /login ──────────────────────────────────────────────────────────────
-router.post("/login", async (req, res) => {
+router.post("/login", authLimiter, async (req, res) => {
   const { email, password } = req.body;
 
   if (!email || !password) {
@@ -59,7 +75,7 @@ router.post("/login", async (req, res) => {
       });
     }
 
-    const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET, {
+    const token = jwt.sign({ userId: user.id }, getSecret(), {
       expiresIn: "7d",
     });
 
@@ -91,7 +107,7 @@ router.post("/logout", (req, res) => {
 });
 
 // ─── POST /register ───────────────────────────────────────────────────────────
-router.post("/register", async (req, res) => {
+router.post("/register", authLimiter, async (req, res) => {
   const { name, email, password } = req.body;
 
   if (!name || !email || !password) {
@@ -126,7 +142,7 @@ router.post("/register", async (req, res) => {
       data: { name: name.trim(), email: cleanEmail, password: hashedPassword },
     });
 
-    const token = jwt.sign({ userId: newUser.id }, process.env.JWT_SECRET, {
+    const token = jwt.sign({ userId: newUser.id }, getSecret(), {
       expiresIn: "7d",
     });
 
@@ -164,7 +180,7 @@ router.get("/me", async (req, res) => {
   }
 
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const decoded = jwt.verify(token, getSecret());
 
     const user = await prisma.user.findUnique({
       where: { id: decoded.userId },

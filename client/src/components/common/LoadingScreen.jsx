@@ -5,14 +5,17 @@
  * Used by PrivateRoutes (during auth check) and Interview.jsx (during
  * interview + first question fetch).
  *
- * Uses the loading.gif from /public — no props required.
+ * Why /loading.gif instead of a relative import:
+ *   Files in /public are served as-is by Vite at their root URL.
+ *   Importing via a relative path works but is fragile — moving this
+ *   component to a different folder would silently break the path.
+ *   Using the public URL is the idiomatic Vite approach and never breaks.
  */
 
-import loadingAnimation from "../../../public/loading.gif";
 const LoadingScreen = () => {
   return (
     <div className="flex items-center justify-center h-screen">
-      <img src={loadingAnimation} alt="Loading..." />
+      <img src="/loading.gif" alt="Loading..." />
     </div>
   );
 };

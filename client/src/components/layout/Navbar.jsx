@@ -26,6 +26,7 @@ import Signup from "../auth/Signup";
 import Login from "../auth/Login";
 import ForgetPassword from "../auth/ForgetPassword";
 import { useAuth } from "../../context/AuthContext";
+import { API_BASE } from "../../config/api";
 
 gsap.registerPlugin(useGSAP);
 
@@ -58,7 +59,7 @@ const Navbar = () => {
   const handleLogout = async () => {
     try {
       const res = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/api/auth/logout`,
+        `${API_BASE}/api/auth/logout`,
         { method: "POST", credentials: "include" },
       );
       if (!res.ok) throw new Error("Logout failed");

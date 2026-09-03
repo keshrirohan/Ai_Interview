@@ -9,6 +9,7 @@ import {
   LoaderCircle,
   Zap,
 } from "lucide-react";
+import { API_BASE } from "../../config/api";
 
 const PaymentModal = ({ planName = "GOLD", isOpen, onClose, onSuccess }) => {
   const [method, setMethod] = useState("card"); // "card" | "upi" | "stripe"
@@ -27,8 +28,17 @@ const PaymentModal = ({ planName = "GOLD", isOpen, onClose, onSuccess }) => {
 
   if (!isOpen) return null;
 
-  const validPlan = planName.toUpperCase() === "PLATINUM" ? "PLATINUM" : "GOLD";
+  // Only GOLD and PLATINUM are upgradeable â€” any other value (e.g. "FREE")
+  // is an invalid prop and should not silently resolve to a paid plan.
+  const VALID_PAID_PLANS = ["GOLD", "PLATINUM"];
+  const normalizedPlan = planName?.toUpperCase();
+  const validPlan = VALID_PAID_PLANS.includes(normalizedPlan) ? normalizedPlan : "GOLD";
   const amount = validPlan === "PLATINUM" ? 999 : 499;
+
+  // Include JWT from localStorage as a fallback in case the httpOnly cookie
+  // is blocked (same pattern used throughout the rest of the app).
+  const token = localStorage.getItem("token");
+  const authHeaders = token ? { Authorization: `Bearer ${token}` } : {};
 
   const handlePaymentSubmit = async (e) => {
     e.preventDefault();
@@ -38,11 +48,11 @@ const PaymentModal = ({ planName = "GOLD", isOpen, onClose, onSuccess }) => {
 
       // 1. Create Stripe Payment Order / Intent in Backend
       const orderRes = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/api/payment/create-order`,
+        `${API_BASE}/api/payment/create-order`,
         {
           method: "POST",
           credentials: "include",
-          headers: { "Content-Type": "application/json" },
+          headers: { "Content-Type": "application/json", ...authHeaders },
           body: JSON.stringify({ plan: validPlan }),
         }
       );
@@ -71,11 +81,11 @@ const PaymentModal = ({ planName = "GOLD", isOpen, onClose, onSuccess }) => {
   const verifyAndCompletePayment = async (payload) => {
     try {
       const verifyRes = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/api/payment/verify`,
+        `${API_BASE}/api/payment/verify`,
         {
           method: "POST",
           credentials: "include",
-          headers: { "Content-Type": "application/json" },
+          headers: { "Content-Type": "application/json", ...authHeaders },
           body: JSON.stringify(payload),
         }
       );
@@ -85,7 +95,7 @@ const PaymentModal = ({ planName = "GOLD", isOpen, onClose, onSuccess }) => {
         throw new Error(verifyJson.message || "Payment verification failed.");
       }
 
-      setSuccessMsg(`🎉 Payment Successful! Upgraded to ${validPlan} Plan.`);
+      setSuccessMsg(`ðŸŽ‰ Payment Successful! Upgraded to ${validPlan} Plan.`);
 
       setTimeout(() => {
         onSuccess?.(verifyJson.data.user);
@@ -122,7 +132,7 @@ const PaymentModal = ({ planName = "GOLD", isOpen, onClose, onSuccess }) => {
           </div>
 
           <h2 className="mt-3 text-xl sm:text-2xl font-bold text-zinc-900 dark:text-white">
-            Checkout — {validPlan} Plan
+            Checkout â€” {validPlan} Plan
           </h2>
           <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
             Unlock AI Model Answers, extra interview quota, and detailed performance analytics.
@@ -141,7 +151,7 @@ const PaymentModal = ({ planName = "GOLD", isOpen, onClose, onSuccess }) => {
           </div>
           <div className="text-right">
             <span className="text-xl sm:text-2xl font-extrabold text-blue-600 dark:text-blue-400">
-              ₹{amount}
+              â‚¹{amount}
             </span>
             <span className="text-xs text-zinc-400"> /year</span>
           </div>
@@ -225,7 +235,7 @@ const PaymentModal = ({ planName = "GOLD", isOpen, onClose, onSuccess }) => {
                   type="text"
                   required
                   maxLength={19}
-                  placeholder="4532 •••• •••• 8921"
+                  placeholder="4532 â€¢â€¢â€¢â€¢ â€¢â€¢â€¢â€¢ 8921"
                   value={cardNumber}
                   onChange={(e) => setCardNumber(e.target.value)}
                   className="w-full rounded-xl border border-zinc-200 bg-zinc-50 px-3.5 py-2.5 text-xs outline-none focus:border-blue-500 dark:border-zinc-700 dark:bg-zinc-950 dark:text-white"
@@ -254,7 +264,7 @@ const PaymentModal = ({ planName = "GOLD", isOpen, onClose, onSuccess }) => {
                   <input
                     type="password"
                     required
-                    placeholder="•••"
+                    placeholder="â€¢â€¢â€¢"
                     maxLength={4}
                     value={cvv}
                     onChange={(e) => setCvv(e.target.value)}
@@ -308,7 +318,7 @@ const PaymentModal = ({ planName = "GOLD", isOpen, onClose, onSuccess }) => {
               </>
             ) : (
               <>
-                <Lock size={16} /> Pay ₹{amount} & Upgrade Now
+                <Lock size={16} /> Pay â‚¹{amount} & Upgrade Now
               </>
             )}
           </button>
@@ -319,4 +329,5 @@ const PaymentModal = ({ planName = "GOLD", isOpen, onClose, onSuccess }) => {
 };
 
 export default PaymentModal;
+
 

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Mail, Phone, MapPin, Send, Globe, CheckCircle2, LoaderCircle } from "lucide-react";
 import { FaGithub, FaLinkedin } from "react-icons/fa";
+import { API_BASE } from "../config/api";
 
 const Contact = () => {
   const [formData, setFormData] = useState({
@@ -21,7 +22,7 @@ const Contact = () => {
       setErrorMsg("");
       setSuccessMsg("");
 
-      const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/contact`, {
+      const res = await fetch(`${API_BASE}/api/contact`, {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },

@@ -7,8 +7,10 @@
  */
 
 import { Home, ArrowLeft } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const NotFound = () => {
+  const navigate = useNavigate();
   return (
     <section className="flex min-h-screen items-center justify-center bg-zinc-50 px-6 dark:bg-zinc-950">
       <div className="mx-auto max-w-2xl text-center">
@@ -35,7 +37,7 @@ const NotFound = () => {
 
         <div className="mt-10 flex flex-col justify-center gap-4 sm:flex-row">
           <button
-            onClick={() => (window.location.href = "/")}
+            onClick={() => navigate("/")}
             className="flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-6 py-3 font-semibold text-white transition-all duration-300 hover:bg-blue-700 hover:scale-105"
           >
             <Home size={20} />
@@ -43,7 +45,7 @@ const NotFound = () => {
           </button>
 
           <button
-            onClick={() => window.history.back()}
+            onClick={() => navigate(-1)}
             className="flex items-center justify-center gap-2 rounded-xl border border-zinc-300 px-6 py-3 font-semibold text-zinc-700 transition-all duration-300 hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
           >
             <ArrowLeft size={20} />

@@ -64,9 +64,36 @@ router.get("/:interviewId", authMiddleware, async (req, res) => {
 });
 
 // ─── POST /:interviewId/question ──────────────────────────────────────────────
+// Ownership middleware: verify the interview belongs to the requesting user
+// before calling the controller. Prevents IDOR — any authenticated user
+// would otherwise be able to call this with someone else's interviewId.
+const verifyInterviewOwnership = async (req, res, next) => {
+  try {
+    const { interviewId } = req.params;
+    const userId = req.user.userId;
+
+    const interview = await prisma.interview.findFirst({
+      where: { id: interviewId, userId },
+      select: { id: true }, // only check existence — no need to load full record
+    });
+
+    if (!interview) {
+      return res.status(403).json({
+        success: false,
+        message: "Access denied. This interview does not belong to you.",
+      });
+    }
+
+    next();
+  } catch (error) {
+    return res.status(500).json({ success: false, message: error.message });
+  }
+};
+
 router.post(
   "/:interviewId/question",
   authMiddleware,
+  verifyInterviewOwnership,   // ← ownership check added
   generateInterviewQuestion,
 );
 
@@ -74,6 +101,7 @@ router.post(
 router.post(
   "/:interviewId/process",
   authMiddleware,
+  verifyInterviewOwnership,   // ← ownership check added (same guard as /question)
   // Basic input validation before hitting the controller / AI
   (req, res, next) => {
     const { answer } = req.body;

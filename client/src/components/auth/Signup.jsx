@@ -18,6 +18,7 @@ import { useState } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { errorToast, successToast } from "../../utils/toast";
 import { LoaderCircle } from "lucide-react";
+import { API_BASE } from "../../config/api";
 
 const Signup = ({ openLogin, closeModal }) => {
   const { login } = useAuth();
@@ -43,7 +44,7 @@ const Signup = ({ openLogin, closeModal }) => {
       };
 
       const response = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/api/auth/register`,
+        `${API_BASE}/api/auth/register`,
         {
           method: "POST",
           credentials: "include",

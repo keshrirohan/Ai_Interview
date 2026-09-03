@@ -20,14 +20,27 @@
 
 import { useEffect, useState } from "react";
 import { AuthContext } from "./AuthContext";
+import { API_BASE } from "../config/api";
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Restore session from httpOnly cookie or stored JWT token on every page load
+  // Restore session from httpOnly cookie or stored JWT token on every page load.
+  // Also handles the Google OAuth ?token= query param so the callback URL works.
   useEffect(() => {
     const controller = new AbortController();
+
+    // ── Google OAuth callback: pick up token from URL and store it ──────────
+    const params = new URLSearchParams(window.location.search);
+    const urlToken = params.get("token");
+    const authStatus = params.get("auth");
+    if (urlToken && authStatus === "success") {
+      localStorage.setItem("token", urlToken);
+      // Clean the token from the URL without a page reload
+      const cleanUrl = window.location.pathname;
+      window.history.replaceState({}, document.title, cleanUrl);
+    }
 
     const restoreSession = async () => {
       try {
@@ -36,21 +49,17 @@ export const AuthProvider = ({ children }) => {
           ? { Authorization: `Bearer ${storedToken}` }
           : {};
 
-        const res = await fetch(
-          `${import.meta.env.VITE_BACKEND_URL}/api/auth/me`,
-          {
-            credentials: "include",
-            headers,
-            signal: controller.signal,
-          },
-        );
+        const res = await fetch(`${API_BASE}/api/auth/me`, {
+          credentials: "include",
+          headers,
+          signal: controller.signal,
+        });
 
         const data = await res.json();
 
         if (data.success) {
           setUser(data.user);
         } else {
-          // If session restore fails, clear invalid token
           localStorage.removeItem("token");
         }
       } catch (err) {
@@ -61,15 +70,12 @@ export const AuthProvider = ({ children }) => {
     };
 
     restoreSession();
-
     return () => controller.abort();
   }, []);
 
   const login = (userData, token) => {
     setUser(userData);
-    if (token) {
-      localStorage.setItem("token", token);
-    }
+    if (token) localStorage.setItem("token", token);
   };
 
   const logout = () => {

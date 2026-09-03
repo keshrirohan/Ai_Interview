@@ -21,12 +21,19 @@
 
 import Groq from "groq-sdk";
 
-// Groq client is instantiated once at module level and reused for all calls
-const groqClient = new Groq({
-  apiKey: process.env.GROQ_API_KEY,
-});
+let groqClientInstance = null;
+const getGroqClient = () => {
+  const apiKey = process.env.GROQ_API_KEY;
+  if (!apiKey) {
+    throw new Error("GROQ_API_KEY is not configured in server environment.");
+  }
+  if (!groqClientInstance) {
+    groqClientInstance = new Groq({ apiKey });
+  }
+  return groqClientInstance;
+};
 
-const MODEL = "llama-3.3-70b-versatile";
+const MODEL = process.env.GROQ_MODEL || "openai/gpt-oss-20b";
 
 // ─── Generate Role ────────────────────────────────────────────────────────────
 /**
@@ -45,7 +52,7 @@ Generate a suitable role name for this job description.
 Return ONLY valid JSON: { "role": "..." }
 `;
 
-  const response = await groqClient.chat.completions.create({
+  const response = await getGroqClient().chat.completions.create({
     model: MODEL,
     messages: [{ role: "user", content: prompt }],
     response_format: { type: "json_object" },
@@ -82,7 +89,7 @@ Return ONLY valid JSON:
 }
 `;
 
-  const response = await groqClient.chat.completions.create({
+  const response = await getGroqClient().chat.completions.create({
     model: MODEL,
     messages: [{ role: "user", content: prompt }],
     response_format: { type: "json_object" },
@@ -134,7 +141,7 @@ Return ONLY valid JSON:
 `;
 
   try {
-    const response = await groqClient.chat.completions.create({
+    const response = await getGroqClient().chat.completions.create({
       model: MODEL,
       messages: [{ role: "user", content: prompt }],
       response_format: { type: "json_object" },
@@ -143,7 +150,7 @@ Return ONLY valid JSON:
     return JSON.parse(response.choices[0].message.content);
   } catch (error) {
     // Re-throw with a clear message so the controller can return it to the client
-    throw new Error("Failed to process interview answer. Please try again.");
+    throw new Error(error.message || "Failed to process interview answer. Please try again.");
   }
 };
 
@@ -176,6 +183,7 @@ ${JSON.stringify(conversation)}
 
 Analyse the entire interview and return a detailed performance report.
 
+
 Return ONLY valid JSON:
 {
   "score": 8.5,
@@ -191,7 +199,7 @@ Return ONLY valid JSON:
 `;
 
   try {
-    const response = await groqClient.chat.completions.create({
+    const response = await getGroqClient().chat.completions.create({
       model: MODEL,
       messages: [{ role: "user", content: prompt }],
       response_format: { type: "json_object" },
@@ -199,8 +207,15 @@ Return ONLY valid JSON:
 
     return JSON.parse(response.choices[0].message.content);
   } catch (error) {
-    throw new Error("Failed to generate interview report. Please try again.");
+    throw new Error(error.message || "Failed to generate interview report. Please try again.");
   }
 };
 
-export { groqClient };
+export { getGroqClient };
+
+export const groqClient = new Proxy({}, {
+  get(_target, prop) {
+    return getGroqClient()[prop];
+  },
+});
+

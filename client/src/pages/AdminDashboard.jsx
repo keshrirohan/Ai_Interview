@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+﻿import { useEffect, useRef, useState } from "react";
 import {
   Activity,
   AlertCircle,
@@ -24,6 +24,7 @@ import {
   Zap,
 } from "lucide-react";
 import LoadingScreen from "../components/common/LoadingScreen";
+import { API_BASE } from "../config/api";
 
 const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState("overview"); // "overview" | "users" | "contacts" | "interviews" | "payments"
@@ -47,7 +48,7 @@ const AdminDashboard = () => {
   const fetchOverview = async () => {
     try {
       const res = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/api/admin/overview`,
+        `${API_BASE}/api/admin/overview`,
         { credentials: "include", headers: getAuthHeaders() }
       );
       const json = await res.json();
@@ -62,7 +63,7 @@ const AdminDashboard = () => {
   const fetchUsers = async () => {
     try {
       const res = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/api/admin/users?search=${encodeURIComponent(userSearch)}`,
+        `${API_BASE}/api/admin/users?search=${encodeURIComponent(userSearch)}`,
         { credentials: "include", headers: getAuthHeaders() }
       );
       const json = await res.json();
@@ -76,7 +77,7 @@ const AdminDashboard = () => {
   const fetchContacts = async () => {
     try {
       const res = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/api/admin/contacts`,
+        `${API_BASE}/api/admin/contacts`,
         { credentials: "include", headers: getAuthHeaders() }
       );
       const json = await res.json();
@@ -90,7 +91,7 @@ const AdminDashboard = () => {
   const fetchInterviews = async () => {
     try {
       const res = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/api/admin/interviews`,
+        `${API_BASE}/api/admin/interviews`,
         { credentials: "include", headers: getAuthHeaders() }
       );
       const json = await res.json();
@@ -104,7 +105,7 @@ const AdminDashboard = () => {
   const fetchPayments = async () => {
     try {
       const res = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/api/admin/payments`,
+        `${API_BASE}/api/admin/payments`,
         { credentials: "include", headers: getAuthHeaders() }
       );
       const json = await res.json();
@@ -129,7 +130,15 @@ const AdminDashboard = () => {
     initData();
   }, []);
 
+  // Re-fetch users when the search term changes, but skip the initial render
+  // because initData() already fetches users on mount. Without this guard
+  // there would be two parallel /api/admin/users requests on first load.
+  const hasLoadedRef = useRef(false);
   useEffect(() => {
+    if (!hasLoadedRef.current) {
+      hasLoadedRef.current = true;
+      return; // skip first run â€” initData already fetched users
+    }
     fetchUsers();
   }, [userSearch]);
 
@@ -137,11 +146,11 @@ const AdminDashboard = () => {
   const handleUpdatePlan = async (userId, newPlan) => {
     try {
       const res = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/api/admin/users/${userId}/plan`,
+        `${API_BASE}/api/admin/users/${userId}/plan`,
         {
           method: "PATCH",
           credentials: "include",
-          headers: { "Content-Type": "application/json" },
+          headers: { "Content-Type": "application/json", ...getAuthHeaders() },
           body: JSON.stringify({ plan: newPlan }),
         }
       );
@@ -158,11 +167,11 @@ const AdminDashboard = () => {
   const handleUpdateRole = async (userId, newRole) => {
     try {
       const res = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/api/admin/users/${userId}/role`,
+        `${API_BASE}/api/admin/users/${userId}/role`,
         {
           method: "PATCH",
           credentials: "include",
-          headers: { "Content-Type": "application/json" },
+          headers: { "Content-Type": "application/json", ...getAuthHeaders() },
           body: JSON.stringify({ role: newRole }),
         }
       );
@@ -179,8 +188,8 @@ const AdminDashboard = () => {
     if (!window.confirm("Are you sure you want to delete this user?")) return;
     try {
       const res = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/api/admin/users/${userId}`,
-        { method: "DELETE", credentials: "include" }
+        `${API_BASE}/api/admin/users/${userId}`,
+        { method: "DELETE", credentials: "include", headers: getAuthHeaders() }
       );
       const json = await res.json();
       if (json.success) {
@@ -195,11 +204,11 @@ const AdminDashboard = () => {
   const handleUpdateContactStatus = async (id, status) => {
     try {
       const res = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/api/admin/contacts/${id}/status`,
+        `${API_BASE}/api/admin/contacts/${id}/status`,
         {
           method: "PATCH",
           credentials: "include",
-          headers: { "Content-Type": "application/json" },
+          headers: { "Content-Type": "application/json", ...getAuthHeaders() },
           body: JSON.stringify({ status }),
         }
       );
@@ -216,8 +225,8 @@ const AdminDashboard = () => {
   const handleDeleteContact = async (id) => {
     try {
       const res = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/api/admin/contacts/${id}`,
-        { method: "DELETE", credentials: "include" }
+        `${API_BASE}/api/admin/contacts/${id}`,
+        { method: "DELETE", credentials: "include", headers: getAuthHeaders() }
       );
       const json = await res.json();
       if (json.success) {
@@ -329,11 +338,11 @@ const AdminDashboard = () => {
               : "text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-900"
           }`}
         >
-          <CreditCard size={16} /> Revenue & Payments (₹{overview?.totalRevenue || 0})
+          <CreditCard size={16} /> Revenue & Payments (â‚¹{overview?.totalRevenue || 0})
         </button>
       </div>
 
-      {/* ── TAB 1: OVERVIEW ────────────────────────────────────────────── */}
+      {/* â”€â”€ TAB 1: OVERVIEW â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       {activeTab === "overview" && overview && (
         <div className="space-y-8">
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
@@ -357,7 +366,7 @@ const AdminDashboard = () => {
                 <DollarSign size={20} className="text-emerald-500" />
               </div>
               <h2 className="mt-4 text-3xl font-bold text-emerald-600 dark:text-emerald-400">
-                ₹{overview.totalRevenue}
+                â‚¹{overview.totalRevenue}
               </h2>
               <p className="mt-1 text-xs text-zinc-400">
                 {overview.totalTransactions} Success Transactions
@@ -421,7 +430,7 @@ const AdminDashboard = () => {
         </div>
       )}
 
-      {/* ── TAB 2: USER MANAGEMENT ──────────────────────────────────────── */}
+      {/* â”€â”€ TAB 2: USER MANAGEMENT â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       {activeTab === "users" && (
         <div className="space-y-4">
           <div className="flex items-center gap-4 rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
@@ -507,7 +516,7 @@ const AdminDashboard = () => {
         </div>
       )}
 
-      {/* ── TAB 3: CONTACT INBOX ────────────────────────────────────────── */}
+      {/* â”€â”€ TAB 3: CONTACT INBOX â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       {activeTab === "contacts" && (
         <div className="space-y-4">
           <div className="grid gap-4">
@@ -582,7 +591,7 @@ const AdminDashboard = () => {
         </div>
       )}
 
-      {/* ── TAB 4: SYSTEM INTERVIEWS ────────────────────────────────────── */}
+      {/* â”€â”€ TAB 4: SYSTEM INTERVIEWS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       {activeTab === "interviews" && (
         <div className="space-y-4">
           <div className="overflow-x-auto rounded-3xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
@@ -628,7 +637,7 @@ const AdminDashboard = () => {
                     </td>
 
                     <td className="p-4 font-bold text-blue-600 dark:text-blue-400">
-                      {item.report?.score ? `${item.report.score} / 10` : "—"}
+                      {item.report?.score ? `${item.report.score} / 10` : "â€”"}
                     </td>
 
                     <td className="p-4 text-zinc-400">
@@ -642,7 +651,7 @@ const AdminDashboard = () => {
         </div>
       )}
 
-      {/* ── TAB 5: PAYMENTS ─────────────────────────────────────────────── */}
+      {/* â”€â”€ TAB 5: PAYMENTS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       {activeTab === "payments" && (
         <div className="space-y-4">
           <div className="overflow-x-auto rounded-3xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
@@ -674,7 +683,7 @@ const AdminDashboard = () => {
                     </td>
 
                     <td className="p-4 font-bold text-emerald-600 dark:text-emerald-400">
-                      ₹{p.amount}
+                      â‚¹{p.amount}
                     </td>
 
                     <td className="p-4">
@@ -699,3 +708,4 @@ const AdminDashboard = () => {
 };
 
 export default AdminDashboard;
+

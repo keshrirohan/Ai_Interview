@@ -23,7 +23,7 @@ Welcome to the **EchoHire AI Developer Guide**. This document provides an end-to
 | **Client SPA** | User interface, state management, speech recognition & synthesis, payment popups | `client/src/App.jsx`<br>`client/src/main.jsx` | HTTP REST API with credentials (`include`) |
 | **Authentication** | JWT verification, HTTP-only cookie parsing, password hashing | `server/src/middlewares/auth.middleware.js`<br>`server/src/routes/auth.routes.js` | Express middleware attached to protected routes |
 | **API Server** | Request validation, business logic, transaction management | `server/src/server.js`<br>`server/src/routes/*.js` | Express 5 controllers & service functions |
-| **AI LLM Engine** | Dynamic question generation, answer evaluation, performance scoring | `server/src/services/groq.service.js` | Async HTTPS calls to Groq API (`llama-3.3-70b-versatile`) |
+| **AI LLM Engine** | Dynamic question generation, answer evaluation, performance scoring | `server/src/services/groq.service.js` | Async HTTPS calls to Groq API (`openai/gpt-oss-20b`) |
 | **Database & ORM** | Data persistence, atomic transactions, plan limit checks | `server/src/lib/prisma.js`<br>`server/prisma/schema.prisma` | Prisma Client 7 over PostgreSQL connection pool |
 | **Payment Gateway** | PaymentIntent creation, payment authorization, transaction verification | `server/src/services/payment.service.js`<br>`client/src/components/payment/PaymentModal.jsx` | Stripe SDK & REST API |
 

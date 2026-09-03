@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+﻿import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   Activity,
@@ -29,8 +29,9 @@ import {
 import { useAuth } from "../context/AuthContext";
 import LoadingScreen from "../components/common/LoadingScreen";
 import PaymentModal from "../components/payment/PaymentModal";
+import { API_BASE } from "../config/api";
 
-// ─── Graph 1: Performance Trend Line & Area Chart ───────────────────────────
+// â”€â”€â”€ Graph 1: Performance Trend Line & Area Chart â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const PerformanceTrendChart = ({ interviews }) => {
   const completed = (interviews || [])
     .filter((i) => i.report && i.report.score !== null)
@@ -144,7 +145,7 @@ const PerformanceTrendChart = ({ interviews }) => {
   );
 };
 
-// ─── Graph 2: Competency Breakdown Bar Chart ───────────────────────────────
+// â”€â”€â”€ Graph 2: Competency Breakdown Bar Chart â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const CompetencyRadarChart = ({ stats }) => {
   const metrics = [
     { label: "Technical Competency", score: stats.averageTechnical || 0, color: "#3b82f6" },
@@ -182,7 +183,7 @@ const CompetencyRadarChart = ({ stats }) => {
   );
 };
 
-// ─── Graph 3: Difficulty Breakdown Chart ────────────────────────────────────
+// â”€â”€â”€ Graph 3: Difficulty Breakdown Chart â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const DifficultyBreakdownChart = ({ interviews }) => {
   const counts = { EASY: 0, MEDIUM: 0, HARD: 0 };
   const scores = { EASY: [], MEDIUM: [], HARD: [] };
@@ -228,7 +229,7 @@ const DifficultyBreakdownChart = ({ interviews }) => {
   );
 };
 
-// ─── Graph 4: Question-by-Question Score Bar Chart ──────────────────────────
+// â”€â”€â”€ Graph 4: Question-by-Question Score Bar Chart â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const QuestionScoresBarChart = ({ conversation }) => {
   if (!Array.isArray(conversation) || conversation.length === 0) return null;
 
@@ -266,7 +267,7 @@ const QuestionScoresBarChart = ({ conversation }) => {
   );
 };
 
-// ─── Main Profile Component ──────────────────────────────────────────────────
+// â”€â”€â”€ Main Profile Component â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const Profile = () => {
   const { user: authUser } = useAuth();
   const [data, setData] = useState(null);
@@ -288,7 +289,7 @@ const Profile = () => {
         const token = localStorage.getItem("token");
         const headers = token ? { Authorization: `Bearer ${token}` } : {};
         const res = await fetch(
-          `${import.meta.env.VITE_BACKEND_URL}/api/dashboard`,
+          `${API_BASE}/api/dashboard`,
           { credentials: "include", headers }
         );
         const json = await res.json();
@@ -382,7 +383,7 @@ const Profile = () => {
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950">
     <div className="mx-auto max-w-7xl space-y-10 px-4 py-24 sm:px-6 lg:px-8">
-      {/* ── Header Card ────────────────────────────────────────────────── */}
+      {/* â”€â”€ Header Card â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       <div className="relative overflow-hidden rounded-3xl border border-zinc-200 bg-white p-8 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
         <div className="absolute -right-12 -top-12 h-64 w-64 rounded-full bg-blue-500/5 blur-3xl" />
         <div className="relative flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
@@ -455,7 +456,7 @@ const Profile = () => {
         </div>
       </div>
 
-      {/* ── Key Metrics Overview ───────────────────────────────────────── */}
+      {/* â”€â”€ Key Metrics Overview â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
         <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
           <div className="flex items-center justify-between">
@@ -529,7 +530,7 @@ const Profile = () => {
         </div>
       </div>
 
-      {/* ── Visual Analytics Graphs Section ─────────────────────────────── */}
+      {/* â”€â”€ Visual Analytics Graphs Section â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       <div className="grid gap-8 lg:grid-cols-2">
         {/* Graph 1: Performance Trend Line Chart */}
         <div className="rounded-3xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
@@ -575,7 +576,7 @@ const Profile = () => {
         <DifficultyBreakdownChart interviews={interviews} />
       </div>
 
-      {/* ── Overall Performance Analysis Report ───────────────────────── */}
+      {/* â”€â”€ Overall Performance Analysis Report â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       <section className="rounded-3xl border border-zinc-200 bg-white p-8 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
         <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div>
@@ -674,7 +675,7 @@ const Profile = () => {
         </div>
       </section>
 
-      {/* ── Held Interviews Section ────────────────────────────────────── */}
+      {/* â”€â”€ Held Interviews Section â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       <section className="space-y-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
@@ -834,7 +835,7 @@ const Profile = () => {
         )}
       </section>
 
-      {/* ── Detailed Session Report Modal ──────────────────────────────── */}
+      {/* â”€â”€ Detailed Session Report Modal â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       {selectedInterview && (
         <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/60 p-4 backdrop-blur-sm">
           <div className="relative max-h-[90vh] w-full max-w-4xl overflow-y-auto rounded-3xl border border-zinc-200 bg-white p-6 sm:p-8 shadow-2xl dark:border-zinc-800 dark:bg-zinc-900">
@@ -1069,7 +1070,7 @@ const Profile = () => {
         </div>
       )}
 
-      {/* ── Payment Gateway Checkout Modal ─────────────────────────────── */}
+      {/* â”€â”€ Payment Gateway Checkout Modal â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       <PaymentModal
         isOpen={Boolean(paymentModalPlan)}
         planName={paymentModalPlan || "GOLD"}
@@ -1082,3 +1083,4 @@ const Profile = () => {
 };
 
 export default Profile;
+

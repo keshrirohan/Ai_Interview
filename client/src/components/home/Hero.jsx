@@ -5,9 +5,12 @@
  * Contains the main headline, description, CTA buttons, and stat counters.
  * Purely presentational — no props or state.
  *
- * Note: "Start Free Interview" links to /newinterview.
+ * "Start Free Interview" navigates to /interview (NewInterview form) via
+ * React Router <Link> so the SPA router handles it without a full reload.
  * "Watch Demo" is a placeholder — no handler yet.
  */
+
+import { Link } from "react-router-dom";
 
 const Hero = () => {
   return (
@@ -43,12 +46,12 @@ const Hero = () => {
 
           {/* Buttons */}
           <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
-            <a
-              href="/newinterview"
+            <Link
+              to="/interview"
               className="rounded-xl bg-blue-600 px-8 py-4 font-semibold text-white shadow-lg shadow-blue-500/30 transition-all duration-300 hover:scale-105 hover:bg-blue-700"
             >
               Start Free Interview
-            </a>
+            </Link>
 
             <button className="rounded-xl border border-zinc-300 bg-white px-8 py-4 font-semibold text-zinc-800 transition-all duration-300 hover:bg-zinc-100 dark:border-zinc-700 dark:bg-zinc-900 dark:text-white dark:hover:bg-zinc-800">
               Watch Demo

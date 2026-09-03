@@ -20,6 +20,7 @@ import { useNavigate } from "react-router-dom";
 import JDs from "../components/home/JDs";
 import LoadingScreen from "../components/common/LoadingScreen";
 import { errorToast } from "../utils/toast";
+import { API_BASE } from "../config/api";
 
 const NewInterview = () => {
   const navigate = useNavigate();
@@ -52,7 +53,7 @@ const NewInterview = () => {
       setIsGenerating(true);
       const token = localStorage.getItem("token");
       const response = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/api/interview/start`,
+        `${API_BASE}/api/interview/start`,
         {
           method: "POST",
           credentials: "include",
