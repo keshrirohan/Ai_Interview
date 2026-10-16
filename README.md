@@ -218,9 +218,9 @@ FRONTEND_URL="http://localhost:5173"
 **Indexes:** `@@index([userId])`, `@@index([status])`, `@@index([userId, status])`
 
 ### Report
-| Field | Type | Notes |
-|---|---|---|
-| id | String (cuid) | |
+| Field | Type          | Notes |
+|---    |---            |---    |
+| id    | String (cuid) | |
 | interviewId | String | Unique FK → Interview |
 | score | Float | Overall 0–10 |
 | communication | Float | |

@@ -5,10 +5,6 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  // Required for all Prisma CLI commands (migrate, generate, introspect).
-  // The PrismaPg driver adapter in lib/prisma.js also reads this value at
-  // runtime, so both paths use the same env variable.
-  url      = env("DATABASE_URL")
 }
 
 // ===========================
